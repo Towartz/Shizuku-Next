@@ -23,7 +23,6 @@ rikka-material = "2.7.2"
 rikka-html-ktx = "1.1.2"
 rikka-borderview = "1.1.0"
 rikka-lifecycle = "1.0.1"
-rikka-lifecycle-viewmodel-lazy = "2.0.0"
 boringssl = "20250114"
 libcxx = "27.0.12077973"
 hiddenapibypass = "6.1"
@@ -72,8 +71,6 @@ rikka-material = { group = "dev.rikka.rikkax.material", name = "material", versi
 rikka-html-ktx = { group = "dev.rikka.rikkax.html", name = "html-ktx", version.ref = "rikka-html-ktx" }
 borderview = { group = "dev.rikka.rikkax.widget", name = "borderview", version.ref = "rikka-borderview" }
 rikka-lifecycle-resource-livedata = { group = "dev.rikka.rikkax.lifecycle", name = "lifecycle-resource-livedata", version.ref = "rikka-lifecycle" }
-rikka-lifecycle-shared-viewmodel = { group = "dev.rikka.rikkax.lifecycle", name = "lifecycle-shared-viewmodel", version.ref = "rikka-lifecycle" }
-rikka-lifecycle-viewmodel-lazy = { group = "dev.rikka.rikkax.lifecycle", name = "lifecycle-viewmodel-lazy", version.ref = "rikka-lifecycle-viewmodel-lazy" }
 boringssl = { group = "io.github.vvb2060.ndk", name = "boringssl", version.ref = "boringssl" }
 libcxx = { group = "org.lsposed.libcxx", name = "libcxx", version.ref = "libcxx" }
 hiddenapibypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version.ref = "hiddenapibypass" }

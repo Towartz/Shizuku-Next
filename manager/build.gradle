@@ -185,8 +185,6 @@ dependencies {
     implementation libs.rikka.html.ktx
     implementation libs.borderview
     implementation libs.rikka.lifecycle.resource.livedata
-    implementation libs.rikka.lifecycle.shared.viewmodel
-    implementation libs.rikka.lifecycle.viewmodel.lazy
 
     implementation libs.boringssl
     implementation libs.libcxx

@@ -17,9 +17,9 @@ import moe.shizuku.manager.adb.AdbKeyException
 import moe.shizuku.manager.adb.AdbWirelessHelper
 import moe.shizuku.manager.app.AppBarActivity
 import moe.shizuku.manager.databinding.StarterActivityBinding
+import moe.shizuku.manager.utils.viewModels
 import rikka.lifecycle.Resource
 import rikka.lifecycle.Status
-import rikka.lifecycle.viewModels
 import rikka.shizuku.Shizuku
 import java.net.ConnectException
 import javax.net.ssl.SSLProtocolException

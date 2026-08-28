@@ -30,10 +30,10 @@ import moe.shizuku.manager.starter.Starter
 import moe.shizuku.manager.starter.StarterActivity
 import moe.shizuku.manager.utils.CustomTabsHelper
 import moe.shizuku.manager.utils.EnvironmentUtils
+import moe.shizuku.manager.utils.viewModels
 import moe.shizuku.manager.watchdog.WatchdogService
 import rikka.core.util.ClipboardUtils
 import rikka.lifecycle.Status
-import rikka.lifecycle.viewModels
 import rikka.shizuku.Shizuku
 
 abstract class HomeActivity : AppActivity() {

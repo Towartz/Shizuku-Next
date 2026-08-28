@@ -13,9 +13,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import moe.shizuku.manager.authorization.AuthorizationManager
+import moe.shizuku.manager.utils.activitySharedViewModels
+import moe.shizuku.manager.utils.sharedViewModels
 import rikka.lifecycle.Resource
-import rikka.lifecycle.activitySharedViewModels
-import rikka.lifecycle.sharedViewModels
 
 @MainThread
 fun ComponentActivity.appsViewModel() = sharedViewModels { AppsViewModel(this) }
