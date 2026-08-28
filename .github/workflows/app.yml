@@ -35,13 +35,15 @@ jobs:
           if [ -z "$ALIAS" ]; then ALIAS='${{ secrets.KEYSTORE_ALIAS }}'; fi
           if [ -z "$KEY_PASS" ]; then KEY_PASS='${{ secrets.KEYSTORE_ALIAS_PASSWORD }}'; fi
 
-          echo "KEYSTORE_PASSWORD=$STORE_PASS" > signing.properties
-          echo "KEYSTORE_ALIAS=$ALIAS" >> signing.properties
-          echo "KEYSTORE_ALIAS_PASSWORD=$KEY_PASS" >> signing.properties
-          echo "KEYSTORE_FILE=../key.jks" >> signing.properties
+          if [ -n "$STORE_B64" ]; then
+            echo "KEYSTORE_PASSWORD=$STORE_PASS" > signing.properties
+            echo "KEYSTORE_ALIAS=$ALIAS" >> signing.properties
+            echo "KEYSTORE_ALIAS_PASSWORD=$KEY_PASS" >> signing.properties
+            echo "KEYSTORE_FILE=../key.jks" >> signing.properties
 
-          # Use printf to avoid newline/encoding issues when decoding keystore bytes.
-          printf '%s' "$STORE_B64" | base64 --decode > key.jks
+            # Use printf to avoid newline/encoding issues when decoding keystore bytes.
+            printf '%s' "$STORE_B64" | base64 --decode > key.jks
+          fi
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
