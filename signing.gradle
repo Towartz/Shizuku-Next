@@ -2,16 +2,16 @@ def ksFile = rootProject.file('signing.properties')
 def props = new Properties()
 if (ksFile.canRead()) {
     props.load(new FileInputStream(ksFile))
+    def keyFile = props['KEYSTORE_FILE'] ? rootProject.file(props['KEYSTORE_FILE']) : null
 
-    if (props != null) {
-        android.signingConfigs.sign.storeFile file(props['KEYSTORE_FILE'])
+    if (keyFile != null && keyFile.exists() && keyFile.length() > 0 && props['KEYSTORE_ALIAS']) {
+        android.signingConfigs.sign.storeFile keyFile
         android.signingConfigs.sign.storePassword props['KEYSTORE_PASSWORD']
         android.signingConfigs.sign.keyAlias props['KEYSTORE_ALIAS']
         android.signingConfigs.sign.keyPassword props['KEYSTORE_ALIAS_PASSWORD']
+    } else {
+        android.signingConfigs.sign.initWith(android.signingConfigs.debug)
     }
 } else {
-    android.signingConfigs.sign.storeFile = android.signingConfigs.debug.storeFile
-    android.signingConfigs.sign.storePassword = android.signingConfigs.debug.storePassword
-    android.signingConfigs.sign.keyAlias = android.signingConfigs.debug.keyAlias
-    android.signingConfigs.sign.keyPassword = android.signingConfigs.debug.keyPassword
+    android.signingConfigs.sign.initWith(android.signingConfigs.debug)
 }
