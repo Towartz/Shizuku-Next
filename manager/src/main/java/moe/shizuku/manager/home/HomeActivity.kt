@@ -62,7 +62,11 @@ abstract class HomeActivity : AppActivity() {
         homeModel.serviceStatus.observe(this) {
             if (it.status == Status.SUCCESS) {
                 val status = it.data ?: return@observe
-                ShizukuSettings.setLastLaunchMode(if (status.uid == 0) ShizukuSettings.LaunchMethod.ROOT else ShizukuSettings.LaunchMethod.ADB)
+                val mode = if (status.uid == 0) ShizukuSettings.LaunchMethod.ROOT else ShizukuSettings.LaunchMethod.ADB
+                ShizukuSettings.setLastLaunchMode(mode)
+                if (status.isRunning && ShizukuSettings.getPreferences().getBoolean(ShizukuSettings.WATCHDOG_ENABLED_ADB, false)) {
+                    WatchdogService.start(this)
+                }
             }
         }
         appsModel.grantedCount.observe(this) { }

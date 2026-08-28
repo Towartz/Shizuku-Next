@@ -18,6 +18,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import moe.shizuku.manager.AppConstants
 import moe.shizuku.manager.R
@@ -41,6 +43,7 @@ class SelfStarterService : Service(), LifecycleOwner {
             "moe.shizuku.manager.extra.DISABLE_WIRELESS_DEBUGGING_WHEN_FINISHED"
         const val EXTRA_STARTED_BY_WATCHDOG =
             "moe.shizuku.manager.extra.STARTED_BY_WATCHDOG"
+        private const val MDNS_DISCOVERY_TIMEOUT_MS = 15_000L
     }
 
     private val lifecycleRegistry = LifecycleRegistry(this)
@@ -51,13 +54,14 @@ class SelfStarterService : Service(), LifecycleOwner {
     private var adbMdns: AdbMdns? = null
     private val adbWirelessHelper = AdbWirelessHelper()
     private var disableWirelessDebuggingWhenFinished = false
+    private var discoveryTimeoutJob: Job? = null
 
     private val portObserver = Observer<Int> { p ->
         if (p in 1..65535) {
+            discoveryTimeoutJob?.cancel()
             Log.i(
                 AppConstants.TAG, "Discovered adb port via mDNS: $p, starting Shizuku directly"
             )
-            // Do not launch activity, start ADB connection directly
             startShizukuViaAdb("127.0.0.1", p, disableWirelessDebuggingWhenFinished)
         } else {
             Log.w(AppConstants.TAG, "mDNS returned invalid port: $p")
@@ -84,7 +88,6 @@ class SelfStarterService : Service(), LifecycleOwner {
             Log.i(AppConstants.TAG, "SelfStarterService invoked by WatchdogService")
         }
 
-        // Already running? Manual start can choose to force restart.
         if (Shizuku.pingBinder()) {
             if (!forceRestart) {
                 Log.i(AppConstants.TAG, "Shizuku is already running, stopping service.")
@@ -102,8 +105,10 @@ class SelfStarterService : Service(), LifecycleOwner {
 
         val autoEnableWirelessDebugging =
             intent?.getBooleanExtra(EXTRA_AUTO_ENABLE_WIRELESS_DEBUGGING, false) == true
-        if (autoEnableWirelessDebugging && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            adbWirelessHelper.validateThenEnableWirelessAdb(contentResolver, this, false)
+        if (autoEnableWirelessDebugging && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            runCatching {
+                adbWirelessHelper.validateThenEnableWirelessAdb(contentResolver, this, false)
+            }
         }
 
         val wirelessEnabled = Settings.Global.getInt(contentResolver, "adb_wifi_enabled", 0) == 1
@@ -112,7 +117,6 @@ class SelfStarterService : Service(), LifecycleOwner {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && wirelessEnabled) {
             Log.i(AppConstants.TAG, "Starting mDNS discovery for wireless ADB port.")
 
-            // Remove potential previous observer before adding a new one
             portLive.removeObserver(portObserver)
             portLive.observeForever(portObserver)
 
@@ -123,10 +127,19 @@ class SelfStarterService : Service(), LifecycleOwner {
                     )
             }
             adbMdns?.start()
+
+            discoveryTimeoutJob?.cancel()
+            discoveryTimeoutJob = lifecycleScope.launch {
+                delay(MDNS_DISCOVERY_TIMEOUT_MS)
+                if (!Shizuku.pingBinder()) {
+                    Log.w(AppConstants.TAG, "mDNS discovery timed out in SelfStarterService, stopping.")
+                    stopSelf()
+                }
+            }
         } else {
             Log.i(
                 AppConstants.TAG,
-                "Using fallback: SystemProperties/Custom Port for ADB port (or wireless debugging setting off)."
+                "Using fallback: SystemProperties/Custom Port for ADB port."
             )
             val systemPort = EnvironmentUtils.getAdbTcpPort()
             val customPort = adbWirelessHelper.getConfiguredTcpipPort() ?: -1
@@ -147,7 +160,6 @@ class SelfStarterService : Service(), LifecycleOwner {
             }
         }
 
-        // Service should only run once per trigger
         return START_NOT_STICKY
     }
 
@@ -241,12 +253,13 @@ class SelfStarterService : Service(), LifecycleOwner {
     }
 
     override fun onDestroy() {
+        discoveryTimeoutJob?.cancel()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             Log.i(AppConstants.TAG, "SelfStarterService destroying")
             adbMdns?.stop()
         }
 
-        portLive.removeObserver(portObserver) // Clean up the observer
+        portLive.removeObserver(portObserver)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         super.onDestroy()
     }

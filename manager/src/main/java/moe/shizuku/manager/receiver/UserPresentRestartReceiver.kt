@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import moe.shizuku.manager.ktx.setComponentEnabled
+import moe.shizuku.manager.watchdog.WatchdogService
 
 class UserPresentRestartReceiver : BroadcastReceiver() {
 
@@ -15,6 +16,7 @@ class UserPresentRestartReceiver : BroadcastReceiver() {
 
         setEnabled(context, false)
         WirelessBootStartWorker.enqueue(context)
+        WatchdogService.resetAttemptsAndPoke(context)
     }
 
     companion object {

@@ -13,11 +13,13 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import moe.shizuku.manager.AppConstants.EXTRA
 import moe.shizuku.manager.R
+import moe.shizuku.manager.ShizukuSettings
 import moe.shizuku.manager.adb.AdbKeyException
 import moe.shizuku.manager.adb.AdbWirelessHelper
 import moe.shizuku.manager.app.AppBarActivity
 import moe.shizuku.manager.databinding.StarterActivityBinding
 import moe.shizuku.manager.utils.viewModels
+import moe.shizuku.manager.watchdog.WatchdogService
 import rikka.lifecycle.Resource
 import rikka.lifecycle.Status
 import rikka.shizuku.Shizuku
@@ -124,6 +126,10 @@ class StarterActivity : AppBarActivity() {
         Shizuku.removeBinderReceivedListener(listener)
         waitingForServiceListener = null
         viewModel.appendOutput("Service started, this window will be automatically closed in 3 seconds")
+
+        if (ShizukuSettings.getPreferences().getBoolean(ShizukuSettings.WATCHDOG_ENABLED_ADB, false)) {
+            WatchdogService.start(this)
+        }
 
         window?.decorView?.postDelayed({
             if (!isFinishing) finish()

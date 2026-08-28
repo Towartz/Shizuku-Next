@@ -199,9 +199,7 @@ private fun SettingsScreenContent(
                                     switchStates[WATCHDOG_ENABLED_ADB] = checked
                                     saveBoolean(context, WATCHDOG_ENABLED_ADB, checked)
                                     if (checked) {
-                                        if (ShizukuSettings.getLastLaunchMode() == ShizukuSettings.LaunchMethod.ADB
-                                            && rikka.shizuku.Shizuku.pingBinder()
-                                        ) {
+                                        if (rikka.shizuku.Shizuku.pingBinder()) {
                                             WatchdogService.start(context)
                                         }
                                     } else {
