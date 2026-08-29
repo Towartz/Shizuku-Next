@@ -2,8 +2,10 @@ package moe.shizuku.manager.home
 
 import android.content.Intent
 import android.os.Build
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,10 +21,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Computer
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.MoreVert
@@ -48,13 +53,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -67,6 +75,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import moe.shizuku.manager.Helps
 import moe.shizuku.manager.R
 import moe.shizuku.manager.hide.HideAppsActivity
 import moe.shizuku.manager.hide.HideAppsManager
@@ -75,6 +84,7 @@ import moe.shizuku.manager.starter.Starter
 import moe.shizuku.manager.ui.theme.ShizukuComposeTheme
 import moe.shizuku.manager.utils.EnvironmentUtils
 import moe.shizuku.manager.utils.UserHandleCompat
+import rikka.core.util.ClipboardUtils
 
 @Composable
 fun HomeComposeScreen(
@@ -117,6 +127,12 @@ fun HomeComposeScreen(
     }
 }
 
+private enum class StartMethodTab {
+    WIRELESS,
+    ROOT,
+    COMPUTER
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HomeScreenContent(
@@ -146,6 +162,15 @@ private fun HomeScreenContent(
     val hiddenCount = remember(context) {
         HideAppsManager.getHiddenPackages(context).size
     }
+
+    val defaultTab = remember {
+        when {
+            isRoot -> StartMethodTab.ROOT
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R || EnvironmentUtils.getAdbTcpPort() > 0 -> StartMethodTab.WIRELESS
+            else -> StartMethodTab.COMPUTER
+        }
+    }
+    var selectedTab by remember { mutableStateOf(defaultTab) }
 
     val versionName = remember {
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }
@@ -293,54 +318,66 @@ private fun HomeScreenContent(
                 }
             }
 
-            // 4. Start Shizuku Section
+            // 4. Start Shizuku Section (Adaptive Tabs)
             item {
                 SectionHeader(title = stringResource(R.string.home_section_start_methods))
             }
 
-            // Wireless Debugging Card (Android 11+)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R || EnvironmentUtils.getAdbTcpPort() > 0) {
-                item {
-                    StartMethodCard(
-                        icon = Icons.Outlined.Wifi,
-                        title = stringResource(R.string.home_wireless_adb_title),
-                        tag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) "Android 11+" else null,
-                        summary = stringResource(R.string.home_start_wireless_summary),
-                        primaryLabel = stringResource(R.string.home_root_button_start),
-                        secondaryLabel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) stringResource(R.string.adb_pairing) else null,
-                        tertiaryLabel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) stringResource(R.string.home_wireless_adb_view_guide_button) else null,
-                        onPrimary = onStartWirelessAdb,
-                        onSecondary = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) onPairWireless else null,
-                        onTertiary = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) onOpenWirelessGuide else null
-                    )
-                }
-            }
-
-            // Root Access Card
-            if (UserHandleCompat.myUserId() == 0 && (isRoot || !running)) {
-                val rootRestart = running && resolvedStatus.uid == 0
-                item {
-                    StartMethodCard(
-                        icon = Icons.Outlined.PlayArrow,
-                        title = stringResource(R.string.home_root_title),
-                        tag = "Root",
-                        summary = stringResource(R.string.home_start_root_summary),
-                        primaryLabel = if (rootRestart) stringResource(R.string.home_root_button_restart) else stringResource(R.string.home_root_button_start),
-                        onPrimary = if (rootRestart) onRestartRoot else onStartRoot
-                    )
-                }
-            }
-
-            // Computer ADB Card
             item {
-                StartMethodCard(
-                    icon = Icons.Outlined.Computer,
-                    title = stringResource(R.string.home_adb_title),
-                    tag = "ADB",
-                    summary = stringResource(R.string.home_start_adb_summary),
-                    primaryLabel = stringResource(R.string.home_adb_button_view_command),
-                    onPrimary = { dialog = HomeDialog.AdbCommand }
-                )
+                PrimaryTabRow(
+                    selectedTabIndex = selectedTab.ordinal,
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    divider = {}
+                ) {
+                    Tab(
+                        selected = selectedTab == StartMethodTab.WIRELESS,
+                        onClick = { selectedTab = StartMethodTab.WIRELESS },
+                        text = { Text(stringResource(R.string.home_tab_wireless)) },
+                        icon = { Icon(Icons.Outlined.Wifi, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                    )
+                    Tab(
+                        selected = selectedTab == StartMethodTab.ROOT,
+                        onClick = { selectedTab = StartMethodTab.ROOT },
+                        text = { Text(stringResource(R.string.home_tab_root)) },
+                        icon = { Icon(Icons.Outlined.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                    )
+                    Tab(
+                        selected = selectedTab == StartMethodTab.COMPUTER,
+                        onClick = { selectedTab = StartMethodTab.COMPUTER },
+                        text = { Text(stringResource(R.string.home_tab_computer)) },
+                        icon = { Icon(Icons.Outlined.Computer, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                    )
+                }
+            }
+
+            item {
+                when (selectedTab) {
+                    StartMethodTab.WIRELESS -> {
+                        WirelessAdbStartCard(
+                            onStart = onStartWirelessAdb,
+                            onPair = onPairWireless,
+                            onGuide = onOpenWirelessGuide
+                        )
+                    }
+                    StartMethodTab.ROOT -> {
+                        val rootRestart = running && resolvedStatus.uid == 0
+                        RootStartCard(
+                            isRestart = rootRestart,
+                            onStart = if (rootRestart) onRestartRoot else onStartRoot
+                        )
+                    }
+                    StartMethodTab.COMPUTER -> {
+                        ComputerAdbStartCard(
+                            onCopyCommand = {
+                                ClipboardUtils.put(context, Starter.adbCommand)
+                                Toast.makeText(context, context.getString(R.string.home_command_copied), Toast.LENGTH_SHORT).show()
+                            },
+                            onViewCommandDialog = { dialog = HomeDialog.AdbCommand },
+                            onGuide = { dialog = HomeDialog.AdbCommand }
+                        )
+                    }
+                }
             }
         }
     }
@@ -621,19 +658,12 @@ private fun SectionHeader(title: String) {
     )
 }
 
-@Composable
 @OptIn(ExperimentalLayoutApi::class)
-private fun StartMethodCard(
-    icon: ImageVector,
-    title: String,
-    tag: String? = null,
-    summary: String,
-    primaryLabel: String? = null,
-    secondaryLabel: String? = null,
-    tertiaryLabel: String? = null,
-    onPrimary: (() -> Unit)? = null,
-    onSecondary: (() -> Unit)? = null,
-    onTertiary: (() -> Unit)? = null
+@Composable
+private fun WirelessAdbStartCard(
+    onStart: () -> Unit,
+    onPair: () -> Unit,
+    onGuide: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -648,59 +678,216 @@ private fun StartMethodCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = icon,
+                    imageVector = Icons.Outlined.Wifi,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(26.dp)
                 )
                 Spacer(modifier = Modifier.size(14.dp))
                 Text(
-                    text = title,
+                    text = stringResource(R.string.home_wireless_adb_title),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
-                if (tag != null) {
-                    Surface(
-                        shape = MaterialTheme.shapes.small,
-                        color = MaterialTheme.colorScheme.secondaryContainer
-                    ) {
-                        Text(
-                            text = tag,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                        )
-                    }
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Text(
+                        text = "Android 11+",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = summary,
+                text = stringResource(R.string.home_start_wireless_summary),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            if (primaryLabel != null || secondaryLabel != null || tertiaryLabel != null) {
-                Spacer(modifier = Modifier.height(16.dp))
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+            Spacer(modifier = Modifier.height(16.dp))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(onClick = onGuide) {
+                    Icon(Icons.Outlined.HelpOutline, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(R.string.home_wireless_adb_view_guide_button))
+                }
+                FilledTonalButton(onClick = onPair) {
+                    Icon(Icons.Outlined.Wifi, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(R.string.home_wireless_step_pairing))
+                }
+                Button(onClick = onStart) {
+                    Icon(Icons.Outlined.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(R.string.home_wireless_step_start))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RootStartCard(
+    isRestart: Boolean,
+    onStart: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.PlayArrow,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(26.dp)
+                )
+                Spacer(modifier = Modifier.size(14.dp))
+                Text(
+                    text = stringResource(R.string.home_root_title),
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.primaryContainer
                 ) {
-                    tertiaryLabel?.let { label ->
-                        OutlinedButton(onClick = { onTertiary?.invoke() }) {
-                            Text(label)
-                        }
-                    }
-                    secondaryLabel?.let { label ->
-                        FilledTonalButton(onClick = { onSecondary?.invoke() }) {
-                            Text(label)
-                        }
-                    }
-                    primaryLabel?.let { label ->
-                        Button(onClick = { onPrimary?.invoke() }) {
-                            Text(label)
-                        }
-                    }
+                    Text(
+                        text = "Root",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.home_start_root_summary),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = onStart) {
+                Icon(
+                    imageVector = if (isRestart) Icons.Outlined.Refresh else Icons.Outlined.PlayArrow,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    if (isRestart) stringResource(R.string.home_root_button_restart) else stringResource(R.string.home_root_button_start)
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ComputerAdbStartCard(
+    onCopyCommand: () -> Unit,
+    onViewCommandDialog: () -> Unit,
+    onGuide: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Computer,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(26.dp)
+                )
+                Spacer(modifier = Modifier.size(14.dp))
+                Text(
+                    text = stringResource(R.string.home_adb_title),
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Text(
+                        text = "ADB",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.home_start_adb_summary),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Inline Code Snippet Box
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = Starter.adbCommand,
+                        fontFamily = FontFamily.Monospace,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        modifier = Modifier
+                            .weight(1f)
+                            .horizontalScroll(rememberScrollState())
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(onClick = onCopyCommand) {
+                    Icon(Icons.Outlined.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(R.string.home_command_copy))
+                }
+                OutlinedButton(onClick = onViewCommandDialog) {
+                    Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(R.string.home_adb_button_view_command))
                 }
             }
         }

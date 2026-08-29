@@ -166,6 +166,13 @@ With %1$s, in any terminal app, you can connect to and interact with the shell r
     <string name="home_start_adb_summary">Start via USB or Wi-Fi using your computer\'s terminal</string>
     <string name="home_grid_docs">Documentation</string>
     <string name="home_grid_docs_summary">Guides &amp; Help</string>
+    <string name="home_tab_wireless">Wireless ADB</string>
+    <string name="home_tab_root">Root</string>
+    <string name="home_tab_computer">Computer</string>
+    <string name="home_wireless_step_pairing">Pairing</string>
+    <string name="home_wireless_step_start">Start</string>
+    <string name="home_command_copied">Command copied to clipboard</string>
+    <string name="home_command_copy">Copy Command</string>
 
     <!-- Wireless Boot -->
     <string name="wireless_boot_enabled">Wireless ADB auto-start enabled</string>
