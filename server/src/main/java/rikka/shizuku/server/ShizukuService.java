@@ -79,6 +79,11 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
     }
 
     public static ApplicationInfo getManagerApplicationInfo() {
+        String customPkg = System.getProperty("shizuku.manager.package");
+        if (customPkg != null && !customPkg.isEmpty()) {
+            ApplicationInfo ai = PackageManagerApis.getApplicationInfoNoThrow(customPkg, 0, 0);
+            if (ai != null) return ai;
+        }
         return PackageManagerApis.getApplicationInfoNoThrow(MANAGER_APPLICATION_ID, 0, 0);
     }
 

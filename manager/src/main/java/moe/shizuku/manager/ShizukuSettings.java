@@ -31,6 +31,7 @@ public class ShizukuSettings {
     public static final String TCPIP_PORT = "tcpip_port";
     public static final String HIDDEN_APPS_SET = "hidden_apps_set";
     public static final String MASK_PROCESS_NAME = "mask_process_name";
+    public static final String STEALTH_MODE_ENABLED = "stealth_mode_enabled";
 
     private static SharedPreferences sPreferences;
 

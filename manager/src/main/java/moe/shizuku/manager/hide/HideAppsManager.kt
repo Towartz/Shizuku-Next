@@ -73,10 +73,12 @@ object HideAppsManager {
         val pm = context.packageManager
         val installed = pm.getInstalledPackages(PackageManager.GET_META_DATA)
         return installed.filter {
+            val ai = it.applicationInfo ?: return@filter false
             it.packageName != BuildConfig.APPLICATION_ID &&
                 it.packageName != "moe.shizuku.privileged.api" &&
-                it.applicationInfo != null &&
-                (it.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 0
-        }.sortedBy { it.applicationInfo.loadLabel(pm).toString().lowercase() }
+                (ai.flags and ApplicationInfo.FLAG_SYSTEM) == 0
+        }.sortedBy {
+            it.applicationInfo?.loadLabel(pm)?.toString()?.lowercase() ?: it.packageName
+        }
     }
 }

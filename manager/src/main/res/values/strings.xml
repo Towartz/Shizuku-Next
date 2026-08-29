@@ -141,6 +141,9 @@ With %1$s, in any terminal app, you can connect to and interact with the shell r
     <string name="hide_apps_search_hint">Search apps…</string>
     <string name="hide_apps_count">%d apps hidden</string>
     <string name="hide_apps_none">No apps hidden</string>
+    <string name="stealth_mode_title">Stealth mode</string>
+    <string name="stealth_mode_summary">Conceal exported intent filters and receivers from app package scanners</string>
+    <string name="stealth_mode_notice">Modern Shizuku apps communicate directly via Binder and will continue to work normally.</string>
 
     <!-- Wireless Boot -->
     <string name="wireless_boot_enabled">Wireless ADB auto-start enabled</string>

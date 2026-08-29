@@ -77,7 +77,6 @@ import moe.shizuku.manager.ShizukuSettings.WATCHDOG_ENABLED_ADB
 import moe.shizuku.manager.app.ThemeHelper
 import moe.shizuku.manager.ktx.isComponentEnabled
 import moe.shizuku.manager.ktx.setComponentEnabled
-import android.content.Intent
 import moe.shizuku.manager.hide.HideAppsActivity
 import moe.shizuku.manager.hide.HideAppsManager
 import moe.shizuku.manager.receiver.BootCompleteReceiver
