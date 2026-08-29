@@ -3,7 +3,11 @@ package moe.shizuku.manager.hide
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.graphics.Bitmap
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,16 +21,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +47,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,9 +68,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import moe.shizuku.manager.Manifest
 import moe.shizuku.manager.R
 import moe.shizuku.manager.ui.theme.ShizukuComposeTheme
 import moe.shizuku.manager.utils.AppIconCache
+
+private enum class AppFilter {
+    ALL,
+    HIDDEN_ONLY,
+    SHIZUKU_ONLY
+}
 
 @Composable
 fun HideAppsComposeScreen(
@@ -76,6 +96,8 @@ private fun HideAppsContent(
     val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
+    var selectedFilter by remember { mutableStateOf(AppFilter.ALL) }
+    var showMenu by remember { mutableStateOf(false) }
     var apps by remember { mutableStateOf<List<PackageInfo>?>(null) }
     var isStealthMode by remember { mutableStateOf(StealthModeManager.isStealthModeEnabled(context)) }
     val hiddenStates = remember { mutableStateMapOf<String, Boolean>() }
@@ -92,16 +114,33 @@ private fun HideAppsContent(
         }
     }
 
-    val filteredApps = remember(apps, searchQuery) {
-        val currentApps = apps ?: emptyList()
-        if (searchQuery.isBlank()) {
-            currentApps
-        } else {
-            val query = searchQuery.trim().lowercase()
-            val pm = context.packageManager
-            currentApps.filter {
-                val label = it.applicationInfo?.loadLabel(pm)?.toString()?.lowercase() ?: ""
-                label.contains(query) || it.packageName.lowercase().contains(query)
+    val currentApps = apps ?: emptyList()
+    val totalHiddenCount = remember(hiddenStates.values.toList()) {
+        hiddenStates.count { it.value }
+    }
+    val totalShizukuCount = remember(currentApps) {
+        currentApps.count { it.requestedPermissions?.contains(Manifest.permission.API_V23) == true }
+    }
+
+    val filteredApps = remember(currentApps, searchQuery, selectedFilter, hiddenStates.toMap()) {
+        currentApps.filter { packageInfo ->
+            val isHidden = hiddenStates[packageInfo.packageName] == true
+            val isShizuku = packageInfo.requestedPermissions?.contains(Manifest.permission.API_V23) == true
+
+            val matchesFilter = when (selectedFilter) {
+                AppFilter.ALL -> true
+                AppFilter.HIDDEN_ONLY -> isHidden
+                AppFilter.SHIZUKU_ONLY -> isShizuku
+            }
+            if (!matchesFilter) return@filter false
+
+            if (searchQuery.isBlank()) {
+                true
+            } else {
+                val query = searchQuery.trim().lowercase()
+                val pm = context.packageManager
+                val label = packageInfo.applicationInfo?.loadLabel(pm)?.toString()?.lowercase() ?: ""
+                label.contains(query) || packageInfo.packageName.lowercase().contains(query)
             }
         }
     }
@@ -146,6 +185,48 @@ private fun HideAppsContent(
                         IconButton(onClick = { isSearchActive = true }) {
                             Icon(Icons.Outlined.Search, contentDescription = null)
                         }
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(Icons.Outlined.MoreVert, contentDescription = null)
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.hide_apps_action_hide_shizuku_all)) },
+                                onClick = {
+                                    showMenu = false
+                                    currentApps.forEach { pi ->
+                                        if (pi.requestedPermissions?.contains(Manifest.permission.API_V23) == true) {
+                                            hiddenStates[pi.packageName] = true
+                                            HideAppsManager.setPackageHidden(
+                                                context = context,
+                                                packageName = pi.packageName,
+                                                hidden = true,
+                                                explicitUid = pi.applicationInfo?.uid
+                                            )
+                                        }
+                                    }
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.hide_apps_action_unhide_all)) },
+                                onClick = {
+                                    showMenu = false
+                                    currentApps.forEach { pi ->
+                                        if (hiddenStates[pi.packageName] == true) {
+                                            hiddenStates[pi.packageName] = false
+                                            HideAppsManager.setPackageHidden(
+                                                context = context,
+                                                packageName = pi.packageName,
+                                                hidden = false,
+                                                explicitUid = pi.applicationInfo?.uid
+                                            )
+                                        }
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             )
@@ -166,16 +247,18 @@ private fun HideAppsContent(
                     .fillMaxSize()
                     .padding(innerPadding),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                // Unified Hero Card
                 item {
                     Card(
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                         ),
+                        shape = MaterialTheme.shapes.extraLarge,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
+                        Column(modifier = Modifier.padding(20.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
@@ -184,13 +267,14 @@ private fun HideAppsContent(
                                     imageVector = Icons.Outlined.VisibilityOff,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(28.dp)
+                                    modifier = Modifier.size(32.dp)
                                 )
                                 Spacer(modifier = Modifier.size(16.dp))
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = stringResource(R.string.stealth_mode_title),
-                                        style = MaterialTheme.typography.titleMedium
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text(
@@ -199,7 +283,7 @@ private fun HideAppsContent(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                                Spacer(modifier = Modifier.size(8.dp))
+                                Spacer(modifier = Modifier.size(12.dp))
                                 Switch(
                                     checked = isStealthMode,
                                     onCheckedChange = { checked ->
@@ -208,37 +292,17 @@ private fun HideAppsContent(
                                     }
                                 )
                             }
-                        }
-                    }
-                }
-
-                item {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Shield,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(28.dp)
-                            )
-                            Spacer(modifier = Modifier.size(16.dp))
-                            Column {
+                            Spacer(modifier = Modifier.height(14.dp))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
-                                    text = stringResource(R.string.settings_hide_from_apps),
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = stringResource(R.string.settings_hide_from_apps_summary),
-                                    style = MaterialTheme.typography.bodySmall,
+                                    text = stringResource(R.string.hide_apps_stats, totalHiddenCount, totalShizukuCount),
+                                    style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
@@ -246,25 +310,87 @@ private fun HideAppsContent(
                     }
                 }
 
+                // Filter Chips Row
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        FilterChip(
+                            selected = selectedFilter == AppFilter.ALL,
+                            onClick = { selectedFilter = AppFilter.ALL },
+                            label = { Text("${stringResource(R.string.hide_apps_filter_all)} (${currentApps.size})") },
+                            leadingIcon = if (selectedFilter == AppFilter.ALL) {
+                                { Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                            } else null
+                        )
+                        FilterChip(
+                            selected = selectedFilter == AppFilter.HIDDEN_ONLY,
+                            onClick = { selectedFilter = AppFilter.HIDDEN_ONLY },
+                            label = { Text("${stringResource(R.string.hide_apps_filter_hidden)} ($totalHiddenCount)") },
+                            leadingIcon = if (selectedFilter == AppFilter.HIDDEN_ONLY) {
+                                { Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                            } else null
+                        )
+                        FilterChip(
+                            selected = selectedFilter == AppFilter.SHIZUKU_ONLY,
+                            onClick = { selectedFilter = AppFilter.SHIZUKU_ONLY },
+                            label = { Text("${stringResource(R.string.hide_apps_filter_shizuku)} ($totalShizukuCount)") },
+                            leadingIcon = if (selectedFilter == AppFilter.SHIZUKU_ONLY) {
+                                { Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                            } else null
+                        )
+                    }
+                }
+
+                // Empty State or List
                 if (filteredApps.isEmpty()) {
                     item {
-                        Box(
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                            ),
+                            shape = MaterialTheme.shapes.extraLarge,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 32.dp),
-                            contentAlignment = Alignment.Center
+                                .padding(vertical = 16.dp)
                         ) {
-                            Text(
-                                text = stringResource(R.string.hide_apps_none),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 32.dp, horizontal = 20.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Shield,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = stringResource(R.string.hide_apps_none),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                if (searchQuery.isNotEmpty() || selectedFilter != AppFilter.ALL) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    TextButton(onClick = {
+                                        searchQuery = ""
+                                        selectedFilter = AppFilter.ALL
+                                    }) {
+                                        Text("Clear Filters")
+                                    }
+                                }
+                            }
                         }
                     }
                 } else {
                     items(filteredApps, key = { it.packageName }) { packageInfo ->
                         val isHidden = hiddenStates[packageInfo.packageName] == true
-                        HideAppItem(
+                        HideAppCard(
                             packageInfo = packageInfo,
                             isHidden = isHidden,
                             onToggle = { checked ->
@@ -285,7 +411,7 @@ private fun HideAppsContent(
 }
 
 @Composable
-private fun HideAppItem(
+private fun HideAppCard(
     packageInfo: PackageInfo,
     isHidden: Boolean,
     onToggle: (Boolean) -> Unit
@@ -296,40 +422,74 @@ private fun HideAppItem(
     val label = remember(packageInfo) {
         appInfo?.loadLabel(pm)?.toString() ?: packageInfo.packageName
     }
+    val isShizukuClient = remember(packageInfo) {
+        packageInfo.requestedPermissions?.contains(Manifest.permission.API_V23) == true
+    }
 
-    Surface(
-        shape = MaterialTheme.shapes.medium,
-        tonalElevation = 1.dp,
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = if (isHidden) {
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f)
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerLow
+            }
+        ),
+        shape = MaterialTheme.shapes.extraLarge,
+        onClick = { onToggle(!isHidden) },
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             appInfo?.let {
-                HideAppIcon(applicationInfo = it, size = 40.dp)
+                HideAppIcon(applicationInfo = it, size = 44.dp)
             }
             Spacer(modifier = Modifier.size(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = label,
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = packageInfo.packageName,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                val isShizukuClient = packageInfo.requestedPermissions?.contains(moe.shizuku.manager.Manifest.permission.API_V23) == true
-                if (isShizukuClient) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = stringResource(R.string.hide_apps_badge_shizuku_api),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                if (isShizukuClient || isHidden) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (isShizukuClient) {
+                            Surface(
+                                shape = MaterialTheme.shapes.small,
+                                color = MaterialTheme.colorScheme.primaryContainer
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.hide_apps_badge_shizuku_api),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                        if (isHidden) {
+                            Surface(
+                                shape = MaterialTheme.shapes.small,
+                                color = MaterialTheme.colorScheme.errorContainer
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.hide_apps_badge_hidden),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
             Spacer(modifier = Modifier.size(8.dp))
@@ -359,13 +519,13 @@ private fun HideAppIcon(applicationInfo: ApplicationInfo, size: Dp) {
             contentDescription = null,
             modifier = Modifier
                 .size(size)
-                .clip(MaterialTheme.shapes.small)
+                .clip(MaterialTheme.shapes.medium)
         )
     } else {
         Box(
             modifier = Modifier
                 .size(size)
-                .clip(MaterialTheme.shapes.small)
+                .clip(MaterialTheme.shapes.medium)
         )
     }
 }

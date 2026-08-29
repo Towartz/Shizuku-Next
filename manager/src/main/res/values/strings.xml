@@ -142,7 +142,14 @@ With %1$s, in any terminal app, you can connect to and interact with the shell r
     <string name="hide_apps_count">%d apps hidden</string>
     <string name="hide_apps_none">No apps found</string>
     <string name="hide_apps_badge_shizuku_api">Shizuku API</string>
-    <string name="hide_apps_badge_hidden">Hidden from Shizuku</string>
+    <string name="hide_apps_badge_hidden">Hidden</string>
+    <string name="hide_apps_filter_all">All</string>
+    <string name="hide_apps_filter_hidden">Hidden</string>
+    <string name="hide_apps_filter_shizuku">Shizuku API</string>
+    <string name="hide_apps_action_hide_shizuku_all">Hide all Shizuku apps</string>
+    <string name="hide_apps_action_unhide_all">Unhide all apps</string>
+    <string name="hide_apps_show_system">Show system apps</string>
+    <string name="hide_apps_stats">%1$d hidden • %2$d Shizuku API clients</string>
     <string name="stealth_mode_title">Stealth mode</string>
     <string name="stealth_mode_summary">Conceal exported intent filters and receivers from app package scanners</string>
     <string name="stealth_mode_notice">Modern Shizuku apps communicate directly via Binder and will continue to work normally.</string>

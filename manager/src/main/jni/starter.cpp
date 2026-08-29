@@ -49,6 +49,8 @@
 #define ABI "arm64"
 #endif
 
+static char s_target_process_name[1024] = SERVER_NAME;
+
 static void run_server(const char *dex_path, const char *main_class, const char *process_name, const char *manager_package) {
     if (setenv("CLASSPATH", dex_path, true)) {
         LOGE("can't set CLASSPATH\n");
@@ -147,7 +149,7 @@ static void start_server(const char *path, const char *main_class, const char *p
 }
 
 static int check_selinux(const char *s, const char *t, const char *c, const char *p) {
-    int res = selinux_check_access(s, t, c, p);
+    int res = se::selinux_check_access(s, t, c, p, nullptr);
 #ifndef DEBUG
     if (res != 0) {
 #endif
@@ -200,16 +202,20 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    snprintf(s_target_process_name, sizeof(s_target_process_name), "%s", process_name.c_str());
+
     uid_t uid = getuid();
     if (uid != 0 && uid != 2000) {
         perrorf("fatal: run Shizuku from non root nor adb user (uid=%d).\n", uid);
         exit(EXIT_FATAL_UID);
     }
 
-    char *scon;
-    if (getcon(&scon) >= 0) {
-        printf("info: starter from %s\n", scon);
-        freecon(scon);
+    se::init();
+
+    char *context = nullptr;
+    if (se::getcon && se::getcon(&context) == 0) {
+        printf("info: starter from %s\n", context);
+        if (se::freecon) se::freecon(context);
     }
 
     if (uid == 0) {
@@ -240,13 +246,13 @@ int main(int argc, char *argv[]) {
     printf("info: killing old process...\n");
     fflush(stdout);
 
-    foreach_proc([&process_name](pid_t pid) {
+    foreach_proc([](pid_t pid) {
         if (pid == getpid()) return;
 
         char name[1024];
         if (get_proc_name(pid, name, 1024) != 0) return;
 
-        if (strcmp(SERVER_NAME, name) != 0 && strcmp(process_name.c_str(), name) != 0)
+        if (strcmp(SERVER_NAME, name) != 0 && strcmp(s_target_process_name, name) != 0)
             return;
 
         if (kill(pid, SIGKILL) == 0)
