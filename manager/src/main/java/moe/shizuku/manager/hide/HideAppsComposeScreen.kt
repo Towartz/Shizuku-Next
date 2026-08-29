@@ -82,6 +82,7 @@ private fun HideAppsContent(
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
+            HideAppsManager.syncAllToService(context)
             val installed = HideAppsManager.getInstalledApps(context)
             val hiddenSet = HideAppsManager.getHiddenPackages(context)
             withContext(Dispatchers.Main) {
@@ -268,7 +269,12 @@ private fun HideAppsContent(
                             isHidden = isHidden,
                             onToggle = { checked ->
                                 hiddenStates[packageInfo.packageName] = checked
-                                HideAppsManager.setPackageHidden(context, packageInfo.packageName, checked)
+                                HideAppsManager.setPackageHidden(
+                                    context = context,
+                                    packageName = packageInfo.packageName,
+                                    hidden = checked,
+                                    explicitUid = packageInfo.applicationInfo?.uid
+                                )
                             }
                         )
                     }

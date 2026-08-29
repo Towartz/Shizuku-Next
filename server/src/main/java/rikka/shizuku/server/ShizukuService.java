@@ -430,6 +430,7 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
                 List<ClientRecord> records = clientManager.findClients(uid);
                 for (ClientRecord record : records) {
                     record.allowed = false;
+                    clientManager.getClients().remove(record);
                     ActivityManagerApis.forceStopPackageNoThrow(record.packageName, UserHandleCompat.getUserId(record.uid));
                 }
                 for (String packageName : PackageManagerApis.getPackagesForUidNoThrow(uid)) {

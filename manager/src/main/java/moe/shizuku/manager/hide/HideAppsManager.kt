@@ -27,6 +27,8 @@ object HideAppsManager {
     private val uidCache = ConcurrentHashMap<Int, Boolean>()
     @Volatile
     private var initialized = false
+    @Volatile
+    private var listenerRegistered = false
 
     private fun ensureInitialized(context: Context) {
         if (!initialized) {
@@ -39,6 +41,17 @@ object HideAppsManager {
                     cachedHiddenPackages.addAll(savedSet)
                     uidCache.clear()
                     initialized = true
+
+                    if (!listenerRegistered) {
+                        listenerRegistered = true
+                        try {
+                            Shizuku.addBinderReceivedListenerSticky {
+                                syncAllToService(context)
+                            }
+                        } catch (e: Throwable) {
+                            LOGGER.w(e, "HideAppsManager: failed to register binder listener")
+                        }
+                    }
                 }
             }
         }
@@ -65,7 +78,7 @@ object HideAppsManager {
         }
     }
 
-    fun setPackageHidden(context: Context, packageName: String, hidden: Boolean) {
+    fun setPackageHidden(context: Context, packageName: String, hidden: Boolean, explicitUid: Int? = null) {
         ensureInitialized(context)
         if (hidden) {
             cachedHiddenPackages.add(packageName)
@@ -80,17 +93,21 @@ object HideAppsManager {
 
         if (Shizuku.pingBinder()) {
             try {
-                val pm = context.packageManager
-                val ai = pm.getApplicationInfo(packageName, 0)
-                val uid = ai.uid
-                val mask = MASK_HIDDEN or MASK_PERMISSION
-                val value = if (hidden) FLAG_HIDDEN or FLAG_DENIED else 0
-                Shizuku.updateFlagsForUid(uid, mask, value)
-                if (hidden) {
-                    try {
-                        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
-                        am?.killBackgroundProcesses(packageName)
-                    } catch (_: Throwable) {
+                val uid = explicitUid ?: try {
+                    context.packageManager.getApplicationInfo(packageName, 0).uid
+                } catch (_: Throwable) {
+                    -1
+                }
+                if (uid > 0) {
+                    val mask = MASK_HIDDEN or MASK_PERMISSION
+                    val value = if (hidden) FLAG_HIDDEN or FLAG_DENIED else 0
+                    Shizuku.updateFlagsForUid(uid, mask, value)
+                    if (hidden) {
+                        try {
+                            val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+                            am?.killBackgroundProcesses(packageName)
+                        } catch (_: Throwable) {
+                        }
                     }
                 }
             } catch (e: Throwable) {
@@ -99,7 +116,31 @@ object HideAppsManager {
         }
     }
 
+    fun syncAllToService(context: Context) {
+        ensureInitialized(context)
+        if (!Shizuku.pingBinder()) return
+
+        val hiddenList = cachedHiddenPackages.toList()
+        if (hiddenList.isEmpty()) return
+
+        val pm = context.packageManager
+        for (pkg in hiddenList) {
+            try {
+                val ai = pm.getApplicationInfo(pkg, 0)
+                if (ai.uid > 0) {
+                    val mask = MASK_HIDDEN or MASK_PERMISSION
+                    val value = FLAG_HIDDEN or FLAG_DENIED
+                    Shizuku.updateFlagsForUid(ai.uid, mask, value)
+                }
+            } catch (e: Throwable) {
+                LOGGER.w(e, "HideAppsManager: syncAllToService failed for $pkg")
+            }
+        }
+        LOGGER.i("HideAppsManager: synced ${hiddenList.size} hidden packages to Shizuku service")
+    }
+
     fun getInstalledApps(context: Context): List<PackageInfo> {
+        ensureInitialized(context)
         val pm = context.packageManager
         val installed = mutableListOf<PackageInfo>()
 
