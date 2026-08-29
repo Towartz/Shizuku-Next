@@ -34,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -42,6 +43,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.setValue
+import moe.shizuku.manager.hide.HideAppsManager
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -87,8 +89,9 @@ private fun ApplicationManagementContent(
     val context = LocalContext.current
     var dialogState by remember { mutableStateOf<ManagementDialogState?>(null) }
     val grantStates = remember { mutableStateMapOf<String, Boolean>() }
+    val hiddenPackages by HideAppsManager.hiddenPackagesFlow.collectAsState()
 
-    LaunchedEffect(packages) {
+    LaunchedEffect(packages, hiddenPackages) {
         val currentKeys = packages.mapNotNull { packageInfo ->
             val uid = packageInfo.applicationInfo?.uid ?: return@mapNotNull null
             val key = packageGrantKey(packageInfo.packageName, uid)
@@ -138,9 +141,10 @@ private fun ApplicationManagementContent(
                         AppCard(
                             packageInfo = packageInfo,
                             granted = granted,
+                            isHidden = hiddenPackages.contains(packageInfo.packageName),
                             onToggle = {
                                 when (onTogglePackage(packageInfo)) {
-                                    ToggleResult.Success -> grantStates[grantKey] = AuthorizationManager.granted(packageInfo.packageName, uid)
+                                    ToggleResult.Success -> grantStates[grantKey] = AuthorizationManager.granted(packageInfo.packageName, uid, context)
                                     ToggleResult.AdbLimited -> dialogState = ManagementDialogState.AdbLimited
                                 }
                             }
@@ -213,6 +217,7 @@ private fun EmptyState(modifier: Modifier = Modifier) {
 private fun AppCard(
     packageInfo: PackageInfo,
     granted: Boolean,
+    isHidden: Boolean,
     onToggle: () -> Unit
 ) {
     val context = LocalContext.current
@@ -262,7 +267,6 @@ private fun AppCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                val isHidden = moe.shizuku.manager.hide.HideAppsManager.isPackageHidden(context, applicationInfo.packageName)
                 if (isHidden) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(

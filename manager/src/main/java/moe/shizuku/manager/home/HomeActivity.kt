@@ -138,6 +138,7 @@ abstract class HomeActivity : AppActivity() {
     override fun onResume() {
         super.onResume()
         checkServerStatus()
+        appsModel.load()
     }
 
     override fun onNewIntent(intent: Intent) {

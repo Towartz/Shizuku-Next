@@ -15,6 +15,10 @@ import moe.shizuku.manager.utils.ShizukuSystemApis
 import rikka.shizuku.Shizuku
 import java.util.concurrent.ConcurrentHashMap
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
 object HideAppsManager {
 
     const val FLAG_HIDDEN = 1 shl 3
@@ -25,6 +29,9 @@ object HideAppsManager {
 
     private val cachedHiddenPackages = ConcurrentHashMap.newKeySet<String>()
     private val uidCache = ConcurrentHashMap<Int, Boolean>()
+    private val _hiddenPackagesFlow = MutableStateFlow<Set<String>>(emptySet())
+    val hiddenPackagesFlow: StateFlow<Set<String>> = _hiddenPackagesFlow.asStateFlow()
+
     @Volatile
     private var initialized = false
     @Volatile
@@ -39,6 +46,7 @@ object HideAppsManager {
                     val savedSet = prefs.getStringSet(ShizukuSettings.HIDDEN_APPS_SET, emptySet()) ?: emptySet()
                     cachedHiddenPackages.clear()
                     cachedHiddenPackages.addAll(savedSet)
+                    _hiddenPackagesFlow.value = cachedHiddenPackages.toSet()
                     uidCache.clear()
                     initialized = true
 
@@ -89,6 +97,7 @@ object HideAppsManager {
 
         val prefs = ShizukuSettings.getPreferences()
         prefs.edit().putStringSet(ShizukuSettings.HIDDEN_APPS_SET, HashSet(cachedHiddenPackages)).apply()
+        _hiddenPackagesFlow.value = cachedHiddenPackages.toSet()
         Log.i(AppConstants.TAG, "HideAppsManager: updated $packageName hidden=$hidden (total hidden=${cachedHiddenPackages.size})")
 
         if (Shizuku.pingBinder()) {

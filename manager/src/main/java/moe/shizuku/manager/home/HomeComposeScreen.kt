@@ -61,6 +61,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -159,9 +160,8 @@ private fun HomeScreenContent(
     val resolvedStatus = status ?: ServiceStatus()
     val running = resolvedStatus.isRunning
     val isRoot = EnvironmentUtils.isRooted()
-    val hiddenCount = remember(context) {
-        HideAppsManager.getHiddenPackages(context).size
-    }
+    val hiddenPackages by HideAppsManager.hiddenPackagesFlow.collectAsState()
+    val hiddenCount = hiddenPackages.size
 
     val defaultTab = remember {
         when {
