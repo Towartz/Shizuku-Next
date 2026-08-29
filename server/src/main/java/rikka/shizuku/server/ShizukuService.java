@@ -270,10 +270,25 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
     public void showPermissionConfirmation(int requestCode, @NonNull ClientRecord clientRecord, int callingUid, int callingPid, int userId) {
         ApplicationInfo ai = PackageManagerApis.getApplicationInfoNoThrow(clientRecord.packageName, 0, userId);
         if (ai == null) {
+            clientRecord.dispatchRequestPermissionResult(requestCode, false);
             return;
         }
 
-        PackageInfo pi = PackageManagerApis.getPackageInfoNoThrow(MANAGER_APPLICATION_ID, 0, userId);
+        // Fast-path: Check if already granted at system level
+        try {
+            if (PermissionManagerApis.checkPermission(PERMISSION, callingUid) == PackageManager.PERMISSION_GRANTED) {
+                clientRecord.allowed = true;
+                clientRecord.dispatchRequestPermissionResult(requestCode, true);
+                return;
+            }
+        } catch (Throwable tr) {
+            LOGGER.w(tr, "checkPermission fast-path");
+        }
+
+        ApplicationInfo managerAi = getManagerApplicationInfo();
+        String managerPackage = managerAi != null ? managerAi.packageName : MANAGER_APPLICATION_ID;
+
+        PackageInfo pi = PackageManagerApis.getPackageInfoNoThrow(managerPackage, 0, userId);
         UserInfo userInfo = UserManagerApis.getUserInfo(userId);
         boolean isWorkProfileUser = BuildUtils.atLeast30() ?
                 "android.os.usertype.profile.MANAGED".equals(userInfo.userType) :
@@ -284,8 +299,9 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
             return;
         }
 
-        Intent intent = new Intent(ServerConstants.REQUEST_PERMISSION_ACTION)
-                .setPackage(MANAGER_APPLICATION_ID)
+        Intent intent = new Intent(managerPackage + ".intent.action.REQUEST_PERMISSION")
+                .setPackage(managerPackage)
+                .setClassName(managerPackage, "moe.shizuku.manager.authorization.RequestPermissionActivity")
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
                 .putExtra("uid", callingUid)
                 .putExtra("pid", callingPid)

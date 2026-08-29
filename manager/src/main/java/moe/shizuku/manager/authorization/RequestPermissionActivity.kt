@@ -1,6 +1,5 @@
 package moe.shizuku.manager.authorization
 
-import android.app.Dialog
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -26,14 +25,21 @@ import java.util.concurrent.TimeoutException
 
 class RequestPermissionActivity : AppActivity() {
 
-    private fun setResult(requestUid: Int, requestPid: Int, requestCode: Int, allowed: Boolean, onetime: Boolean) {
+    private var requestUid: Int = -1
+    private var requestPid: Int = -1
+    private var requestCode: Int = -1
+    private var resultDispatched: Boolean = false
+
+    private fun setResult(uid: Int, pid: Int, code: Int, allowed: Boolean, onetime: Boolean) {
+        if (resultDispatched) return
+        resultDispatched = true
         val data = Bundle()
         data.putBoolean(REQUEST_PERMISSION_REPLY_ALLOWED, allowed)
         data.putBoolean(REQUEST_PERMISSION_REPLY_IS_ONETIME, onetime)
         try {
-            Shizuku.dispatchPermissionConfirmationResult(requestUid, requestPid, requestCode, data)
+            Shizuku.dispatchPermissionConfirmationResult(uid, pid, code, data)
         } catch (e: Throwable) {
-            LOGGER.e("dispatchPermissionConfirmationResult")
+            LOGGER.e("dispatchPermissionConfirmationResult", e)
         }
     }
 
@@ -62,6 +68,8 @@ class RequestPermissionActivity : AppActivity() {
     }
 
     private fun waitForBinder(): Boolean {
+        if (Shizuku.pingBinder()) return true
+
         val countDownLatch = CountDownLatch(1)
 
         val listener = object : Shizuku.OnBinderReceivedListener {
@@ -76,7 +84,7 @@ class RequestPermissionActivity : AppActivity() {
         return try {
             countDownLatch.await(5, TimeUnit.SECONDS)
             true
-        } catch (e: TimeoutException) {
+        } catch (e: Throwable) {
             LOGGER.e(e, "Binder not received in 5s")
             false
         }
@@ -90,16 +98,16 @@ class RequestPermissionActivity : AppActivity() {
             return
         }
 
-        val uid = intent.getIntExtra("uid", -1)
-        val pid = intent.getIntExtra("pid", -1)
-        val requestCode = intent.getIntExtra("requestCode", -1)
+        requestUid = intent.getIntExtra("uid", -1)
+        requestPid = intent.getIntExtra("pid", -1)
+        requestCode = intent.getIntExtra("requestCode", -1)
         val ai = intent.getParcelableExtra<ApplicationInfo>("applicationInfo")
-        if (uid == -1 || pid == -1 || ai == null) {
+        if (requestUid == -1 || requestPid == -1 || ai == null) {
             finish()
             return
         }
         if (!checkSelfPermission()) {
-            setResult(uid, pid, requestCode, allowed = false, onetime = true)
+            setResult(requestUid, requestPid, requestCode, allowed = false, onetime = true)
             return
         }
 
@@ -118,18 +126,25 @@ class RequestPermissionActivity : AppActivity() {
                 secondaryLabel = getString(R.string.grant_dialog_button_allow_once),
                 tertiaryLabel = getString(R.string.grant_dialog_button_deny),
                 onPrimary = {
-                    setResult(uid, pid, requestCode, allowed = true, onetime = false)
+                    setResult(requestUid, requestPid, requestCode, allowed = true, onetime = false)
                     finish()
                 },
                 onSecondary = {
-                    setResult(uid, pid, requestCode, allowed = true, onetime = true)
+                    setResult(requestUid, requestPid, requestCode, allowed = true, onetime = true)
                     finish()
                 },
                 onTertiary = {
-                    setResult(uid, pid, requestCode, allowed = false, onetime = true)
+                    setResult(requestUid, requestPid, requestCode, allowed = false, onetime = true)
                     finish()
                 }
             )
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (!resultDispatched && requestUid != -1 && requestPid != -1 && requestCode != -1) {
+            setResult(requestUid, requestPid, requestCode, allowed = false, onetime = true)
         }
     }
 }
