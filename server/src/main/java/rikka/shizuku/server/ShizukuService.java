@@ -391,6 +391,7 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
         }
 
         int userId = UserHandleCompat.getUserId(uid);
+        List<String> packages = PackageManagerApis.getPackagesForUidNoThrow(uid);
 
         if ((mask & ConfigManager.MASK_PERMISSION) != 0) {
             boolean allowed = (value & ConfigManager.FLAG_ALLOWED) != 0;
@@ -407,7 +408,7 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
                 }
             }
 
-            for (String packageName : PackageManagerApis.getPackagesForUidNoThrow(uid)) {
+            for (String packageName : packages) {
                 PackageInfo pi = PackageManagerApis.getPackageInfoNoThrow(packageName, PackageManager.GET_PERMISSIONS, userId);
                 if (pi == null || pi.requestedPermissions == null || !ArraysKt.contains(pi.requestedPermissions, PERMISSION)) {
                     continue;
@@ -433,14 +434,19 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
                     clientManager.getClients().remove(record);
                     ActivityManagerApis.forceStopPackageNoThrow(record.packageName, UserHandleCompat.getUserId(record.uid));
                 }
-                for (String packageName : PackageManagerApis.getPackagesForUidNoThrow(uid)) {
+                for (String packageName : packages) {
                     ActivityManagerApis.forceStopPackageNoThrow(packageName, userId);
                     PermissionManagerApis.revokeRuntimePermission(packageName, PERMISSION, userId);
+                }
+            } else {
+                // When unhidden, immediately re-send the Shizuku Binder to the application so it can reconnect dynamically
+                for (String packageName : packages) {
+                    sendBinderToUserApp(this, packageName, userId);
                 }
             }
         }
 
-        configManager.update(uid, null, mask, value);
+        configManager.update(uid, packages, mask, value);
     }
 
     private void onPermissionRevoked(String packageName) {
@@ -466,7 +472,7 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
                 int flags = 0;
                 ShizukuConfig.PackageEntry entry = configManager.find(uid);
                 if (entry != null) {
-                    if (entry.packages != null && !entry.packages.contains(pi.packageName))
+                    if (entry.packages != null && !entry.packages.isEmpty() && !entry.packages.contains(pi.packageName))
                         continue;
                     flags = entry.flags & ConfigManager.MASK_PERMISSION;
                 }
