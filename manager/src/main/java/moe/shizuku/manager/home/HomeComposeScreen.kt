@@ -175,6 +175,13 @@ private fun HomeScreenContent(
                         onDismissRequest = { menuExpanded = false }
                     ) {
                         DropdownMenuItem(
+                            text = { Text(stringResource(R.string.hide_apps_title)) },
+                            onClick = {
+                                menuExpanded = false
+                                context.startActivity(Intent(context, moe.shizuku.manager.hide.HideAppsActivity::class.java))
+                            }
+                        )
+                        DropdownMenuItem(
                             text = { Text(stringResource(R.string.action_about)) },
                             onClick = {
                                 menuExpanded = false
@@ -387,6 +394,18 @@ private fun buildHomeItems(
             icon = Icons.Outlined.Terminal,
             enabled = running,
             onClick = onOpenTerminal
+        )
+        val hiddenCount = moe.shizuku.manager.hide.HideAppsManager.getHiddenPackages(context).size
+        items += HomeUiItem.Action(
+            title = context.getString(R.string.hide_apps_title),
+            summary = if (hiddenCount > 0) {
+                context.getString(R.string.hide_apps_count, hiddenCount)
+            } else {
+                context.getString(R.string.settings_hide_from_apps_summary)
+            },
+            icon = Icons.Outlined.Security,
+            enabled = true,
+            onClick = { context.startActivity(Intent(context, moe.shizuku.manager.hide.HideAppsActivity::class.java)) }
         )
     }
 

@@ -9,6 +9,9 @@ import android.util.Log
 import moe.shizuku.manager.AppConstants
 import moe.shizuku.manager.BuildConfig
 import moe.shizuku.manager.ShizukuSettings
+import moe.shizuku.manager.utils.Logger.LOGGER
+import moe.shizuku.manager.utils.ShizukuSystemApis
+import rikka.shizuku.Shizuku
 import java.util.concurrent.ConcurrentHashMap
 
 object HideAppsManager {
@@ -71,7 +74,24 @@ object HideAppsManager {
 
     fun getInstalledApps(context: Context): List<PackageInfo> {
         val pm = context.packageManager
-        val installed = pm.getInstalledPackages(PackageManager.GET_META_DATA)
+        val installed = mutableListOf<PackageInfo>()
+
+        if (Shizuku.pingBinder()) {
+            try {
+                installed.addAll(ShizukuSystemApis.getInstalledPackages(PackageManager.GET_META_DATA.toLong(), 0))
+            } catch (e: Throwable) {
+                LOGGER.w(e, "HideAppsManager: failed to get packages via ShizukuSystemApis, fallback to PackageManager")
+            }
+        }
+
+        if (installed.isEmpty()) {
+            try {
+                installed.addAll(pm.getInstalledPackages(PackageManager.GET_META_DATA))
+            } catch (e: Throwable) {
+                LOGGER.e(e, "HideAppsManager: failed to get installed packages via PackageManager")
+            }
+        }
+
         return installed.filter {
             val ai = it.applicationInfo ?: return@filter false
             it.packageName != BuildConfig.APPLICATION_ID &&

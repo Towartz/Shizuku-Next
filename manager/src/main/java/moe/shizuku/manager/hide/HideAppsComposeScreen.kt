@@ -245,16 +245,33 @@ private fun HideAppsContent(
                     }
                 }
 
-                items(filteredApps, key = { it.packageName }) { packageInfo ->
-                    val isHidden = hiddenStates[packageInfo.packageName] == true
-                    HideAppItem(
-                        packageInfo = packageInfo,
-                        isHidden = isHidden,
-                        onToggle = { checked ->
-                            hiddenStates[packageInfo.packageName] = checked
-                            HideAppsManager.setPackageHidden(context, packageInfo.packageName, checked)
+                if (filteredApps.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(R.string.hide_apps_none),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
-                    )
+                    }
+                } else {
+                    items(filteredApps, key = { it.packageName }) { packageInfo ->
+                        val isHidden = hiddenStates[packageInfo.packageName] == true
+                        HideAppItem(
+                            packageInfo = packageInfo,
+                            isHidden = isHidden,
+                            onToggle = { checked ->
+                                hiddenStates[packageInfo.packageName] = checked
+                                HideAppsManager.setPackageHidden(context, packageInfo.packageName, checked)
+                            }
+                        )
+                    }
                 }
             }
         }
