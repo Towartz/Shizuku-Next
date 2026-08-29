@@ -27,10 +27,10 @@ import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.PowerSettingsNew
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material.icons.outlined.Warning
@@ -378,11 +378,25 @@ private fun HomeScreenContent(
         HomeDialog.Stop -> {
             AlertDialog(
                 onDismissRequest = { dialog = null },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Outlined.PowerSettingsNew,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(32.dp)
+                    )
+                },
                 confirmButton = {
-                    TextButton(onClick = {
-                        dialog = null
-                        onStopService()
-                    }) {
+                    Button(
+                        onClick = {
+                            dialog = null
+                            onStopService()
+                        },
+                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        )
+                    ) {
                         Text(stringResource(android.R.string.ok))
                     }
                 },
@@ -509,18 +523,28 @@ private fun HeroStatusBanner(
                 Spacer(modifier = Modifier.height(10.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (status.uid == 0) {
-                        TextButton(onClick = onRestartRoot) {
+                        FilledTonalButton(
+                            onClick = onRestartRoot,
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                        ) {
                             Icon(Icons.Outlined.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(stringResource(R.string.home_root_button_restart))
                         }
                     }
-                    TextButton(onClick = onStopService) {
-                        Icon(Icons.Outlined.Stop, contentDescription = null, modifier = Modifier.size(18.dp))
+                    FilledTonalButton(
+                        onClick = onStopService,
+                        colors = androidx.compose.material3.ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.85f),
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        ),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                    ) {
+                        Icon(Icons.Outlined.PowerSettingsNew, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(stringResource(R.string.action_stop))
                     }
