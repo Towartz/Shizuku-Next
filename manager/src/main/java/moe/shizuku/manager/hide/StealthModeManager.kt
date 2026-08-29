@@ -6,22 +6,26 @@ import android.util.Log
 import moe.shizuku.manager.AppConstants
 import moe.shizuku.manager.ShizukuSettings
 import moe.shizuku.manager.ktx.setComponentEnabled
+import moe.shizuku.manager.authorization.RequestPermissionActivity
 import moe.shizuku.manager.legacy.LegacyIsNotSupportedActivity
 import moe.shizuku.manager.legacy.ShellRequestHandlerActivity
 import moe.shizuku.manager.receiver.BootCompleteReceiver
 import moe.shizuku.manager.receiver.ManualStartReceiver
 import moe.shizuku.manager.receiver.ManualStopReceiver
 import moe.shizuku.manager.receiver.ShizukuReceiver
+import moe.shizuku.manager.receiver.WirelessAdbStateReceiver
 
 object StealthModeManager {
 
     private val DISCOVERABLE_COMPONENTS = listOf(
         ShellRequestHandlerActivity::class.java,
         LegacyIsNotSupportedActivity::class.java,
+        RequestPermissionActivity::class.java,
         ManualStartReceiver::class.java,
         ManualStopReceiver::class.java,
         ShizukuReceiver::class.java,
-        BootCompleteReceiver::class.java
+        BootCompleteReceiver::class.java,
+        WirelessAdbStateReceiver::class.java
     )
 
     fun isStealthModeEnabled(context: Context): Boolean {
