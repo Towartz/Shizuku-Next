@@ -3,9 +3,6 @@ package moe.shizuku.manager.hide
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.graphics.Bitmap
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -37,7 +34,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -68,15 +64,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import moe.shizuku.manager.Manifest
 import moe.shizuku.manager.R
 import moe.shizuku.manager.ui.theme.ShizukuComposeTheme
 import moe.shizuku.manager.utils.AppIconCache
 
 private enum class AppFilter {
     ALL,
-    HIDDEN_ONLY,
-    SHIZUKU_ONLY
+    HIDDEN_ONLY
 }
 
 @Composable
@@ -118,19 +112,14 @@ private fun HideAppsContent(
     val totalHiddenCount = remember(hiddenStates.values.toList()) {
         hiddenStates.count { it.value }
     }
-    val totalShizukuCount = remember(currentApps) {
-        currentApps.count { it.requestedPermissions?.contains(Manifest.permission.API_V23) == true }
-    }
 
     val filteredApps = remember(currentApps, searchQuery, selectedFilter, hiddenStates.toMap()) {
         currentApps.filter { packageInfo ->
             val isHidden = hiddenStates[packageInfo.packageName] == true
-            val isShizuku = packageInfo.requestedPermissions?.contains(Manifest.permission.API_V23) == true
 
             val matchesFilter = when (selectedFilter) {
                 AppFilter.ALL -> true
                 AppFilter.HIDDEN_ONLY -> isHidden
-                AppFilter.SHIZUKU_ONLY -> isShizuku
             }
             if (!matchesFilter) return@filter false
 
@@ -193,19 +182,17 @@ private fun HideAppsContent(
                             onDismissRequest = { showMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.hide_apps_action_hide_shizuku_all)) },
+                                text = { Text(stringResource(R.string.hide_apps_action_hide_all)) },
                                 onClick = {
                                     showMenu = false
                                     currentApps.forEach { pi ->
-                                        if (pi.requestedPermissions?.contains(Manifest.permission.API_V23) == true) {
-                                            hiddenStates[pi.packageName] = true
-                                            HideAppsManager.setPackageHidden(
-                                                context = context,
-                                                packageName = pi.packageName,
-                                                hidden = true,
-                                                explicitUid = pi.applicationInfo?.uid
-                                            )
-                                        }
+                                        hiddenStates[pi.packageName] = true
+                                        HideAppsManager.setPackageHidden(
+                                            context = context,
+                                            packageName = pi.packageName,
+                                            hidden = true,
+                                            explicitUid = pi.applicationInfo?.uid
+                                        )
                                     }
                                 }
                             )
@@ -301,7 +288,7 @@ private fun HideAppsContent(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = stringResource(R.string.hide_apps_stats, totalHiddenCount, totalShizukuCount),
+                                    text = stringResource(R.string.hide_apps_stats, totalHiddenCount, currentApps.size),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -331,14 +318,6 @@ private fun HideAppsContent(
                             onClick = { selectedFilter = AppFilter.HIDDEN_ONLY },
                             label = { Text("${stringResource(R.string.hide_apps_filter_hidden)} ($totalHiddenCount)") },
                             leadingIcon = if (selectedFilter == AppFilter.HIDDEN_ONLY) {
-                                { Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                            } else null
-                        )
-                        FilterChip(
-                            selected = selectedFilter == AppFilter.SHIZUKU_ONLY,
-                            onClick = { selectedFilter = AppFilter.SHIZUKU_ONLY },
-                            label = { Text("${stringResource(R.string.hide_apps_filter_shizuku)} ($totalShizukuCount)") },
-                            leadingIcon = if (selectedFilter == AppFilter.SHIZUKU_ONLY) {
                                 { Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
                             } else null
                         )
@@ -422,9 +401,6 @@ private fun HideAppCard(
     val label = remember(packageInfo) {
         appInfo?.loadLabel(pm)?.toString() ?: packageInfo.packageName
     }
-    val isShizukuClient = remember(packageInfo) {
-        packageInfo.requestedPermissions?.contains(Manifest.permission.API_V23) == true
-    }
 
     Card(
         colors = CardDefaults.cardColors(
@@ -460,35 +436,18 @@ private fun HideAppCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                if (isShizukuClient || isHidden) {
+                if (isHidden) {
                     Spacer(modifier = Modifier.height(6.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        if (isShizukuClient) {
-                            Surface(
-                                shape = MaterialTheme.shapes.small,
-                                color = MaterialTheme.colorScheme.primaryContainer
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.hide_apps_badge_shizuku_api),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
-                            }
-                        }
-                        if (isHidden) {
-                            Surface(
-                                shape = MaterialTheme.shapes.small,
-                                color = MaterialTheme.colorScheme.errorContainer
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.hide_apps_badge_hidden),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onErrorContainer,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
-                            }
-                        }
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = MaterialTheme.colorScheme.errorContainer
+                    ) {
+                        Text(
+                            text = stringResource(R.string.hide_apps_badge_hidden),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
                     }
                 }
             }
