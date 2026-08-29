@@ -1,8 +1,10 @@
 package moe.shizuku.manager
 
+import android.os.Binder
 import android.os.Bundle
 import androidx.core.os.bundleOf
 import moe.shizuku.api.BinderContainer
+import moe.shizuku.manager.hide.HideAppsManager
 import moe.shizuku.manager.utils.Logger.LOGGER
 import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuApiConstants.USER_SERVICE_ARG_TOKEN
@@ -25,6 +27,13 @@ class ShizukuManagerProvider : ShizukuProvider() {
     }
 
     override fun call(method: String, arg: String?, extras: Bundle?): Bundle? {
+        val callingUid = Binder.getCallingUid()
+        val ctx = context
+        if (ctx != null && HideAppsManager.isUidHidden(ctx, callingUid)) {
+            LOGGER.w("Blocked ShizukuManagerProvider.call($method) from hidden target UID $callingUid")
+            return null
+        }
+
         if (extras == null) return null
 
         return if (method == METHOD_SEND_USER_SERVICE) {

@@ -29,6 +29,8 @@ public class ShizukuSettings {
     public static final String AUTO_PAIRING_ENABLED = "auto_pairing_enabled";
     public static final String ADB_ROOT = "adb_root";
     public static final String TCPIP_PORT = "tcpip_port";
+    public static final String HIDDEN_APPS_SET = "hidden_apps_set";
+    public static final String MASK_PROCESS_NAME = "mask_process_name";
 
     private static SharedPreferences sPreferences;
 

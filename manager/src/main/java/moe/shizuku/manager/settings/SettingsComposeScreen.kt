@@ -32,6 +32,7 @@ import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PowerSettingsNew
 import androidx.compose.material.icons.outlined.SettingsEthernet
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -76,6 +77,9 @@ import moe.shizuku.manager.ShizukuSettings.WATCHDOG_ENABLED_ADB
 import moe.shizuku.manager.app.ThemeHelper
 import moe.shizuku.manager.ktx.isComponentEnabled
 import moe.shizuku.manager.ktx.setComponentEnabled
+import android.content.Intent
+import moe.shizuku.manager.hide.HideAppsActivity
+import moe.shizuku.manager.hide.HideAppsManager
 import moe.shizuku.manager.receiver.BootCompleteReceiver
 import moe.shizuku.manager.ui.theme.ShizukuComposeTheme
 import moe.shizuku.manager.utils.CustomTabsHelper
@@ -231,6 +235,10 @@ private fun SettingsScreenContent(
                                 "battery_optimization" -> {
                                     moe.shizuku.manager.utils.SettingsHelper.requestIgnoreBatteryOptimizations(context)
                                     recreateAfterAnimation()
+                                }
+
+                                ShizukuSettings.HIDDEN_APPS_SET -> {
+                                    context.startActivity(Intent(context, HideAppsActivity::class.java))
                                 }
 
                                 TCPIP_PORT -> dialogState = SettingsDialogState.TcpIpPort
@@ -488,6 +496,20 @@ private fun buildSettingsModel(context: Context): List<SettingsSection> {
                 title = context.getString(R.string.settings_tcpip_port),
                 summary = context.getString(R.string.settings_tcpip_port_summary),
                 icon = Icons.Outlined.SettingsEthernet
+            )
+        )
+        val hiddenCount = HideAppsManager.getHiddenPackages(context).size
+        val hiddenSummary = if (hiddenCount > 0) {
+            context.getString(R.string.hide_apps_count, hiddenCount)
+        } else {
+            context.getString(R.string.settings_hide_from_apps_summary)
+        }
+        add(
+            SettingsItem.StaticItem(
+                key = ShizukuSettings.HIDDEN_APPS_SET,
+                title = context.getString(R.string.settings_hide_from_apps),
+                summary = hiddenSummary,
+                icon = Icons.Outlined.Shield
             )
         )
     }

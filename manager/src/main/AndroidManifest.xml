@@ -92,6 +92,9 @@
             android:name=".management.AppsManagementActivity"
             android:label="@string/home_app_management_title" />
         <activity
+            android:name=".hide.HideAppsActivity"
+            android:label="@string/hide_apps_title" />
+        <activity
             android:name=".adb.AdbPairingTutorialActivity"
             android:label="@string/adb_pairing" />
         <activity
