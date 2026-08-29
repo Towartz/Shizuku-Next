@@ -84,6 +84,7 @@ private fun ApplicationManagementContent(
     onNavigateUp: () -> Unit,
     onTogglePackage: (PackageInfo) -> ToggleResult
 ) {
+    val context = LocalContext.current
     var dialogState by remember { mutableStateOf<ManagementDialogState?>(null) }
     val grantStates = remember { mutableStateMapOf<String, Boolean>() }
 
