@@ -214,10 +214,10 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
         isManager = MANAGER_APPLICATION_ID.equals(requestPackageName);
 
         if (!isManager && configManager != null) {
-            ConfigPackageEntry configEntry = configManager.find(callingUid);
+            ShizukuConfig.PackageEntry configEntry = (ShizukuConfig.PackageEntry) configManager.find(callingUid);
             if (configEntry != null && (configEntry.flags & ServerConstants.FLAG_HIDDEN) != 0) {
-                LOGGER.w("attachApplication: rejected hidden target UID %d (%s)", callingUid, requestPackageName);
-                throw new SecurityException("Shizuku service is unavailable");
+                LOGGER.v("attachApplication: silently ignoring hidden target UID %d (%s)", callingUid, requestPackageName);
+                return;
             }
         }
 
@@ -486,7 +486,15 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
 
     @Override
     public boolean onTransact(int code, Parcel data, Parcel reply, int flags) throws RemoteException {
-        //LOGGER.d("transact: code=%d, calling uid=%d", code, Binder.getCallingUid());
+        int callingUid = Binder.getCallingUid();
+        if (UserHandleCompat.getAppId(callingUid) != managerAppId && configManager != null) {
+            ShizukuConfig.PackageEntry configEntry = (ShizukuConfig.PackageEntry) configManager.find(callingUid);
+            if (configEntry != null && (configEntry.flags & ServerConstants.FLAG_HIDDEN) != 0) {
+                LOGGER.v("onTransact: silently dropping transact code %d for hidden UID %d", code, callingUid);
+                return false;
+            }
+        }
+
         if (code == ServerConstants.BINDER_TRANSACTION_getApplications) {
             data.enforceInterface(ShizukuApiConstants.BINDER_DESCRIPTOR);
             int userId = data.readInt();
@@ -541,7 +549,7 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
         if (!MANAGER_APPLICATION_ID.equals(packageName) && sInstance != null && sInstance.configManager != null) {
             ApplicationInfo ai = PackageManagerApis.getApplicationInfoNoThrow(packageName, 0, userId);
             if (ai != null) {
-                ConfigPackageEntry configEntry = sInstance.configManager.find(ai.uid);
+                ShizukuConfig.PackageEntry configEntry = (ShizukuConfig.PackageEntry) sInstance.configManager.find(ai.uid);
                 if (configEntry != null && (configEntry.flags & ServerConstants.FLAG_HIDDEN) != 0) {
                     LOGGER.d("sendBinderToUserApp: skipping hidden target %s (uid %d)", packageName, ai.uid);
                     return;
