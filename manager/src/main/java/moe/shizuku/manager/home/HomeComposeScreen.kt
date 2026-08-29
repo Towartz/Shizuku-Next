@@ -21,9 +21,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
-import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Computer
+import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.PlayArrow
@@ -65,10 +65,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import moe.shizuku.manager.Helps
 import moe.shizuku.manager.R
 import moe.shizuku.manager.hide.HideAppsActivity
 import moe.shizuku.manager.hide.HideAppsManager
@@ -77,7 +75,6 @@ import moe.shizuku.manager.starter.Starter
 import moe.shizuku.manager.ui.theme.ShizukuComposeTheme
 import moe.shizuku.manager.utils.EnvironmentUtils
 import moe.shizuku.manager.utils.UserHandleCompat
-import rikka.html.text.HtmlCompat
 
 @Composable
 fun HomeComposeScreen(
@@ -228,62 +225,7 @@ private fun HomeScreenContent(
                 )
             }
 
-            // 2. At-a-Glance Metric Grid
-            item {
-                MetricGridRow(
-                    grantedCount = grantedCount ?: 0,
-                    hiddenCount = hiddenCount,
-                    running = running,
-                    onManageApps = onManageApps,
-                    onOpenHideApps = { context.startActivity(Intent(context, HideAppsActivity::class.java)) },
-                    onOpenTerminal = onOpenTerminal
-                )
-            }
-
-            // 3. Management & Security Section
-            item {
-                SectionHeader(title = stringResource(R.string.home_section_management))
-            }
-
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    FeatureTile(
-                        icon = Icons.Outlined.Security,
-                        title = context.resources.getQuantityString(
-                            R.plurals.home_app_management_authorized_apps_count,
-                            grantedCount ?: 0,
-                            grantedCount ?: 0
-                        ),
-                        summary = if (running) {
-                            stringResource(R.string.home_app_management_view_authorized_apps)
-                        } else {
-                            stringResource(R.string.home_status_service_not_running, stringResource(R.string.app_name))
-                        },
-                        enabled = running,
-                        onClick = onManageApps
-                    )
-                    FeatureTile(
-                        icon = Icons.Outlined.VisibilityOff,
-                        title = stringResource(R.string.hide_apps_title),
-                        summary = if (hiddenCount > 0) {
-                            stringResource(R.string.hide_apps_count, hiddenCount)
-                        } else {
-                            stringResource(R.string.settings_hide_from_apps_summary)
-                        },
-                        enabled = true,
-                        onClick = { context.startActivity(Intent(context, HideAppsActivity::class.java)) }
-                    )
-                    FeatureTile(
-                        icon = Icons.Outlined.Terminal,
-                        title = stringResource(R.string.home_terminal_title),
-                        summary = stringResource(R.string.home_terminal_description),
-                        enabled = running,
-                        onClick = onOpenTerminal
-                    )
-                }
-            }
-
-            // 4. Limited ADB Warning (if applicable)
+            // 2. Limited ADB Warning (if applicable)
             if (running && !resolvedStatus.permission) {
                 item {
                     WarningBanner(
@@ -295,7 +237,63 @@ private fun HomeScreenContent(
                 }
             }
 
-            // 5. Start Methods Section
+            // 3. Quick Action Grid (2x2)
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        QuickActionGridTile(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Outlined.Security,
+                            title = stringResource(R.string.home_metric_authorized),
+                            subtitle = if (running) {
+                                context.resources.getQuantityString(
+                                    R.plurals.home_app_management_authorized_apps_count,
+                                    grantedCount ?: 0,
+                                    grantedCount ?: 0
+                                )
+                            } else {
+                                stringResource(R.string.home_status_inactive)
+                            },
+                            enabled = running,
+                            onClick = onManageApps
+                        )
+                        QuickActionGridTile(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Outlined.VisibilityOff,
+                            title = stringResource(R.string.hide_apps_title),
+                            subtitle = stringResource(R.string.hide_apps_count, hiddenCount),
+                            enabled = true,
+                            onClick = { context.startActivity(Intent(context, HideAppsActivity::class.java)) }
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        QuickActionGridTile(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Outlined.Terminal,
+                            title = stringResource(R.string.home_metric_terminal),
+                            subtitle = stringResource(R.string.home_metric_terminal_desc),
+                            enabled = running,
+                            onClick = onOpenTerminal
+                        )
+                        QuickActionGridTile(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Outlined.HelpOutline,
+                            title = stringResource(R.string.home_grid_docs),
+                            subtitle = stringResource(R.string.home_grid_docs_summary),
+                            enabled = true,
+                            onClick = onOpenLearnMore
+                        )
+                    }
+                }
+            }
+
+            // 4. Start Shizuku Section
             item {
                 SectionHeader(title = stringResource(R.string.home_section_start_methods))
             }
@@ -306,11 +304,8 @@ private fun HomeScreenContent(
                     StartMethodCard(
                         icon = Icons.Outlined.Wifi,
                         title = stringResource(R.string.home_wireless_adb_title),
-                        summary = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            plainText(stringResource(R.string.home_wireless_adb_description))
-                        } else {
-                            plainText(stringResource(R.string.home_wireless_adb_description_pre_11))
-                        },
+                        tag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) "Android 11+" else null,
+                        summary = stringResource(R.string.home_start_wireless_summary),
                         primaryLabel = stringResource(R.string.home_root_button_start),
                         secondaryLabel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) stringResource(R.string.adb_pairing) else null,
                         tertiaryLabel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) stringResource(R.string.home_wireless_adb_view_guide_button) else null,
@@ -322,21 +317,14 @@ private fun HomeScreenContent(
             }
 
             // Root Access Card
-            if (UserHandleCompat.myUserId() == 0) {
+            if (UserHandleCompat.myUserId() == 0 && (isRoot || !running)) {
                 val rootRestart = running && resolvedStatus.uid == 0
                 item {
                     StartMethodCard(
                         icon = Icons.Outlined.PlayArrow,
                         title = stringResource(R.string.home_root_title),
-                        summary = plainText(
-                            buildString {
-                                append(stringResource(R.string.home_root_description, "Don't kill my app!"))
-                                if (running) {
-                                    append("<p>")
-                                    append(stringResource(R.string.home_root_description_sui, "Sui", "Sui"))
-                                }
-                            }
-                        ),
+                        tag = "Root",
+                        summary = stringResource(R.string.home_start_root_summary),
                         primaryLabel = if (rootRestart) stringResource(R.string.home_root_button_restart) else stringResource(R.string.home_root_button_start),
                         onPrimary = if (rootRestart) onRestartRoot else onStartRoot
                     )
@@ -348,20 +336,10 @@ private fun HomeScreenContent(
                 StartMethodCard(
                     icon = Icons.Outlined.Computer,
                     title = stringResource(R.string.home_adb_title),
-                    summary = plainText(stringResource(R.string.home_adb_description, Helps.ADB.get())),
+                    tag = "ADB",
+                    summary = stringResource(R.string.home_start_adb_summary),
                     primaryLabel = stringResource(R.string.home_adb_button_view_command),
                     onPrimary = { dialog = HomeDialog.AdbCommand }
-                )
-            }
-
-            // 6. Learn More Footer Tile
-            item {
-                FeatureTile(
-                    icon = Icons.Outlined.Info,
-                    title = stringResource(R.string.home_learn_more_title),
-                    summary = stringResource(R.string.home_learn_more_description),
-                    enabled = true,
-                    onClick = onOpenLearnMore
                 )
             }
         }
@@ -383,11 +361,11 @@ private fun HomeScreenContent(
                         Text(text = stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge)
                         Text(text = versionName)
                         LinkRow(
-                            label = plainText(context.getString(R.string.about_view_source_code, "GitHub")),
+                            label = context.getString(R.string.about_view_source_code, "GitHub"),
                             url = "https://github.com/Towartz/Shizuku-mod"
                         )
                         LinkRow(
-                            label = plainText(context.getString(R.string.about_follow_channel, "t.me/np_nbcn")),
+                            label = context.getString(R.string.about_follow_channel, "t.me/np_nbcn"),
                             url = "https://t.me/np_nbcn"
                         )
                     }
@@ -466,9 +444,9 @@ private fun HeroStatusBanner(
     Card(
         colors = CardDefaults.cardColors(
             containerColor = if (running) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
             } else {
-                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
             }
         ),
         shape = MaterialTheme.shapes.extraLarge,
@@ -527,7 +505,7 @@ private fun HeroStatusBanner(
 
             if (running) {
                 Spacer(modifier = Modifier.height(14.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
                 Spacer(modifier = Modifier.height(10.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -553,84 +531,57 @@ private fun HeroStatusBanner(
 }
 
 @Composable
-private fun MetricGridRow(
-    grantedCount: Int,
-    hiddenCount: Int,
-    running: Boolean,
-    onManageApps: () -> Unit,
-    onOpenHideApps: () -> Unit,
-    onOpenTerminal: () -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        MetricTile(
-            modifier = Modifier.weight(1f),
-            icon = Icons.Outlined.Security,
-            count = "$grantedCount",
-            label = stringResource(R.string.home_metric_authorized),
-            enabled = running,
-            onClick = onManageApps
-        )
-        MetricTile(
-            modifier = Modifier.weight(1f),
-            icon = Icons.Outlined.VisibilityOff,
-            count = "$hiddenCount",
-            label = stringResource(R.string.home_metric_hidden),
-            enabled = true,
-            onClick = onOpenHideApps
-        )
-        MetricTile(
-            modifier = Modifier.weight(1f),
-            icon = Icons.Outlined.Terminal,
-            count = "rish",
-            label = stringResource(R.string.home_metric_terminal),
-            enabled = running,
-            onClick = onOpenTerminal
-        )
-    }
-}
-
-@Composable
-private fun MetricTile(
+private fun QuickActionGridTile(
     modifier: Modifier = Modifier,
     icon: ImageVector,
-    count: String,
-    label: String,
+    title: String,
+    subtitle: String,
     enabled: Boolean,
     onClick: () -> Unit
 ) {
     Card(
         modifier = modifier.clickable(enabled = enabled, onClick = onClick),
-        shape = MaterialTheme.shapes.large,
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.8f)
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(16.dp)
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.height(6.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                    modifier = Modifier.size(26.dp)
+                )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowForwardIos,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                    modifier = Modifier.size(12.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = count,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
+                text = title,
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1
             )
         }
     }
@@ -647,64 +598,11 @@ private fun SectionHeader(title: String) {
 }
 
 @Composable
-private fun FeatureTile(
-    icon: ImageVector,
-    title: String,
-    summary: String,
-    enabled: Boolean,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = enabled, onClick = onClick),
-        shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.size(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = summary,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Spacer(modifier = Modifier.size(8.dp))
-            Icon(
-                imageVector = Icons.AutoMirrored.Outlined.ArrowForwardIos,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                modifier = Modifier.size(14.dp)
-            )
-        }
-    }
-}
-
-@Composable
 @OptIn(ExperimentalLayoutApi::class)
 private fun StartMethodCard(
     icon: ImageVector,
     title: String,
+    tag: String? = null,
     summary: String,
     primaryLabel: String? = null,
     secondaryLabel: String? = null,
@@ -721,7 +619,10 @@ private fun StartMethodCard(
         )
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
@@ -732,10 +633,24 @@ private fun StartMethodCard(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
                 )
+                if (tag != null) {
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = MaterialTheme.colorScheme.secondaryContainer
+                    ) {
+                        Text(
+                            text = tag,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
+                }
             }
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = summary,
                 style = MaterialTheme.typography.bodyMedium,
@@ -833,8 +748,4 @@ private enum class HomeDialog {
     About,
     Stop,
     AdbCommand
-}
-
-private fun plainText(value: String): String {
-    return HtmlCompat.fromHtml(value).toString().replace(Regex("\\s+"), " ").trim()
 }

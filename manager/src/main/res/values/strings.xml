@@ -161,6 +161,11 @@ With %1$s, in any terminal app, you can connect to and interact with the shell r
     <string name="home_metric_hidden">Hidden</string>
     <string name="home_metric_terminal">Terminal</string>
     <string name="home_metric_terminal_desc">rish ready</string>
+    <string name="home_start_wireless_summary">Start without root or computer over Wi-Fi (Android 11+)</string>
+    <string name="home_start_root_summary">Start directly using Superuser/Root access</string>
+    <string name="home_start_adb_summary">Start via USB or Wi-Fi using your computer\'s terminal</string>
+    <string name="home_grid_docs">Documentation</string>
+    <string name="home_grid_docs_summary">Guides &amp; Help</string>
 
     <!-- Wireless Boot -->
     <string name="wireless_boot_enabled">Wireless ADB auto-start enabled</string>
