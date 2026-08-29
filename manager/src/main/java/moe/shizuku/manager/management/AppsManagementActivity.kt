@@ -51,10 +51,10 @@ class AppsManagementActivity : AppActivity() {
                     val applicationInfo = packageInfo.applicationInfo ?: return@ApplicationManagementComposeScreen ToggleResult.Success
                     try {
                         val uid = applicationInfo.uid
-                        if (AuthorizationManager.granted(packageInfo.packageName, uid)) {
+                        if (AuthorizationManager.granted(packageInfo.packageName, uid, this)) {
                             AuthorizationManager.revoke(packageInfo.packageName, uid)
                         } else {
-                            AuthorizationManager.grant(packageInfo.packageName, uid)
+                            AuthorizationManager.grant(packageInfo.packageName, uid, this)
                         }
                         ToggleResult.Success
                     } catch (e: SecurityException) {

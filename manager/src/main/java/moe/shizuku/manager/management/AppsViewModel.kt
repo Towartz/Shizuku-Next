@@ -38,7 +38,7 @@ class AppsViewModel(context: Context) : ViewModel() {
                 var count = 0
                 for (pi in AuthorizationManager.getPackages()) {
                     list.add(pi)
-                    if (AuthorizationManager.granted(pi.packageName, pi.applicationInfo!!.uid)) count++
+                    if (AuthorizationManager.granted(pi.packageName, pi.applicationInfo!!.uid, context)) count++
                 }
                 if (!onlyCount) _packages.postValue(Resource.success(list))
                 _grantedCount.postValue(Resource.success(count))

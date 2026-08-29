@@ -91,7 +91,7 @@ private fun ApplicationManagementContent(
         val currentKeys = packages.mapNotNull { packageInfo ->
             val uid = packageInfo.applicationInfo?.uid ?: return@mapNotNull null
             val key = packageGrantKey(packageInfo.packageName, uid)
-            grantStates[key] = AuthorizationManager.granted(packageInfo.packageName, uid)
+            grantStates[key] = AuthorizationManager.granted(packageInfo.packageName, uid, context)
             key
         }.toSet()
         grantStates.keys.removeAll { it !in currentKeys }
@@ -259,6 +259,15 @@ private fun AppCard(
                         text = stringResource(R.string.app_management_item_summary_requires_root),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                val isHidden = moe.shizuku.manager.hide.HideAppsManager.isPackageHidden(context, applicationInfo.packageName)
+                if (isHidden) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.hide_apps_badge_hidden),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error
                     )
                 }
             }

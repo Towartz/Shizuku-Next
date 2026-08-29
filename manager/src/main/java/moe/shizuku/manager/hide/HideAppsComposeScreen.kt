@@ -322,6 +322,15 @@ private fun HideAppItem(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                val isShizukuClient = packageInfo.requestedPermissions?.contains(moe.shizuku.manager.Manifest.permission.API_V23) == true
+                if (isShizukuClient) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = stringResource(R.string.hide_apps_badge_shizuku_api),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
             Spacer(modifier = Modifier.size(8.dp))
             Switch(

@@ -82,19 +82,26 @@ object AuthorizationManager {
         }
     }
 
-    fun granted(packageName: String, uid: Int): Boolean {
+    fun granted(packageName: String, uid: Int, context: android.content.Context? = null): Boolean {
+        if (context != null && moe.shizuku.manager.hide.HideAppsManager.isPackageHidden(context, packageName)) {
+            return false
+        }
         return if (Shizuku.isPreV11()) {
             ShizukuSystemApis.checkPermission(Manifest.permission.API_V23, packageName, uid / 100000) == PackageManager.PERMISSION_GRANTED
         } else {
-            (Shizuku.getFlagsForUid(uid, MASK_PERMISSION) and FLAG_ALLOWED) == FLAG_ALLOWED
+            val flags = Shizuku.getFlagsForUid(uid, MASK_PERMISSION or moe.shizuku.manager.hide.HideAppsManager.MASK_HIDDEN)
+            (flags and moe.shizuku.manager.hide.HideAppsManager.FLAG_HIDDEN) == 0 && (flags and FLAG_ALLOWED) == FLAG_ALLOWED
         }
     }
 
-    fun grant(packageName: String, uid: Int) {
+    fun grant(packageName: String, uid: Int, context: android.content.Context? = null) {
+        if (context != null) {
+            moe.shizuku.manager.hide.HideAppsManager.setPackageHidden(context, packageName, false, uid)
+        }
         if (Shizuku.isPreV11()) {
             ShizukuSystemApis.grantRuntimePermission(packageName, Manifest.permission.API_V23, uid / 100000)
         } else {
-            Shizuku.updateFlagsForUid(uid, MASK_PERMISSION, FLAG_ALLOWED)
+            Shizuku.updateFlagsForUid(uid, MASK_PERMISSION or moe.shizuku.manager.hide.HideAppsManager.MASK_HIDDEN, FLAG_ALLOWED)
         }
     }
 
