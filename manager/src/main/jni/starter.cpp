@@ -49,7 +49,7 @@
 #define ABI "arm64"
 #endif
 
-static void run_server(const char *dex_path, const char *main_class, const char *process_name) {
+static void run_server(const char *dex_path, const char *main_class, const char *process_name, const char *manager_package) {
     if (setenv("CLASSPATH", dex_path, true)) {
         LOGE("can't set CLASSPATH\n");
         exit(EXIT_FATAL_SET_CLASSPATH);
@@ -103,6 +103,7 @@ v_current = (uintptr_t) v + v_size - sizeof(char *); \
     ARG_PUSH(argv, "/system/bin/app_process")
     ARG_PUSH_FMT(argv, "-Djava.class.path=%s", dex_path)
     ARG_PUSH_FMT(argv, "-Dshizuku.library.path=%s", lib_path)
+    ARG_PUSH_FMT(argv, "-Dshizuku.manager.package=%s", manager_package)
     ARG_PUSH_DEBUG_VM_PARAMS(argv)
     ARG_PUSH(argv, "/system/bin")
     ARG_PUSH_FMT(argv, "--nice-name=%s", process_name)
@@ -117,7 +118,7 @@ v_current = (uintptr_t) v + v_size - sizeof(char *); \
     }
 }
 
-static void start_server(const char *path, const char *main_class, const char *process_name) {
+static void start_server(const char *path, const char *main_class, const char *process_name, const char *manager_package) {
     pid_t pid = fork();
     switch (pid) {
         case -1: {
@@ -135,10 +136,10 @@ static void start_server(const char *path, const char *main_class, const char *p
                 dup2(fd, STDERR_FILENO);
                 if (fd > 2) close(fd);
             }
-            run_server(path, main_class, process_name);
+            run_server(path, main_class, process_name, manager_package);
         }
         default: {
-            printf("info: shizuku_server pid is %d\n", pid);
+            printf("info: %s pid is %d\n", process_name, pid);
             printf("info: shizuku_starter exit with 0\n");
             exit(EXIT_SUCCESS);
         }
@@ -146,7 +147,7 @@ static void start_server(const char *path, const char *main_class, const char *p
 }
 
 static int check_selinux(const char *s, const char *t, const char *c, const char *p) {
-    int res = se::selinux_check_access(s, t, c, p, nullptr);
+    int res = selinux_check_access(s, t, c, p);
 #ifndef DEBUG
     if (res != 0) {
 #endif
@@ -187,9 +188,15 @@ static int switch_cgroup() {
 
 int main(int argc, char *argv[]) {
     std::string apk_path;
+    std::string process_name = SERVER_NAME;
+    std::string manager_package = PACKAGE_NAME;
     for (int i = 0; i < argc; ++i) {
         if (strncmp(argv[i], "--apk=", 6) == 0) {
             apk_path = argv[i] + 6;
+        } else if (strncmp(argv[i], "--process-name=", 15) == 0) {
+            process_name = argv[i] + 15;
+        } else if (strncmp(argv[i], "--manager-package=", 18) == 0) {
+            manager_package = argv[i] + 18;
         }
     }
 
@@ -199,33 +206,32 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FATAL_UID);
     }
 
-    se::init();
+    char *scon;
+    if (getcon(&scon) >= 0) {
+        printf("info: starter from %s\n", scon);
+        freecon(scon);
+    }
 
     if (uid == 0) {
         switch_cgroup();
-
-        if (android_get_device_api_level() >= 29) {
-            printf("info: switching mount namespace to init...\n");
-            switch_mnt_ns(1);
-        }
     }
 
-    if (uid == 0) {
-        char *context = nullptr;
-        if (se::getcon(&context) == 0) {
-            int res = 0;
-
-            res |= check_selinux("u:r:untrusted_app:s0", context, "binder", "call");
-            res |= check_selinux("u:r:untrusted_app:s0", context, "binder", "transfer");
-
-            if (res != 0) {
-                perrorf("fatal: the su you are using does not allow app (u:r:untrusted_app:s0) to connect to su (%s) with binder.\n",
-                        context);
-                exit(EXIT_FATAL_BINDER_BLOCKED_BY_SELINUX);
-            }
-            se::freecon(context);
-        }
+    if (check_selinux("u:r:shell:s0", "u:r:shell:s0", "binder", "call") != 0) {
+        exit(EXIT_FATAL_BINDER_BLOCKED_BY_SELINUX);
     }
+
+    if (check_selinux("u:r:shell:s0", "u:r:shell:s0", "binder", "transfer") != 0) {
+        exit(EXIT_FATAL_BINDER_BLOCKED_BY_SELINUX);
+    }
+
+    check_selinux("u:r:untrusted_app:s0", "u:r:shell:s0", "binder", "call");
+    check_selinux("u:r:untrusted_app:s0", "u:r:shell:s0", "binder", "transfer");
+    check_selinux("u:r:untrusted_app_25:s0", "u:r:shell:s0", "binder", "call");
+    check_selinux("u:r:untrusted_app_25:s0", "u:r:shell:s0", "binder", "transfer");
+    check_selinux("u:r:untrusted_app_27:s0", "u:r:shell:s0", "binder", "call");
+    check_selinux("u:r:untrusted_app_27:s0", "u:r:shell:s0", "binder", "transfer");
+    check_selinux("u:r:untrusted_app_29:s0", "u:r:shell:s0", "binder", "call");
+    check_selinux("u:r:untrusted_app_29:s0", "u:r:shell:s0", "binder", "transfer");
 
     printf("info: starter begin\n");
     fflush(stdout);
@@ -234,13 +240,13 @@ int main(int argc, char *argv[]) {
     printf("info: killing old process...\n");
     fflush(stdout);
 
-    foreach_proc([](pid_t pid) {
+    foreach_proc([&process_name](pid_t pid) {
         if (pid == getpid()) return;
 
         char name[1024];
         if (get_proc_name(pid, name, 1024) != 0) return;
 
-        if (strcmp(SERVER_NAME, name) != 0)
+        if (strcmp(SERVER_NAME, name) != 0 && strcmp(process_name.c_str(), name) != 0)
             return;
 
         if (kill(pid, SIGKILL) == 0)
@@ -259,7 +265,8 @@ int main(int argc, char *argv[]) {
     }
 
     if (apk_path.empty()) {
-        auto f = popen("pm path " PACKAGE_NAME, "r");
+        std::string cmd = "pm path " + manager_package;
+        auto f = popen(cmd.c_str(), "r");
         if (f) {
             char line[PATH_MAX]{0};
             fgets(line, PATH_MAX, f);
@@ -284,6 +291,8 @@ int main(int argc, char *argv[]) {
 
     printf("info: starting server...\n");
     fflush(stdout);
-    LOGD("start_server");
-    start_server(apk_path.c_str(), SERVER_CLASS_PATH, SERVER_NAME);
+
+    start_server(apk_path.c_str(), SERVER_CLASS_PATH, process_name.c_str(), manager_package.c_str());
+
+    return 0;
 }

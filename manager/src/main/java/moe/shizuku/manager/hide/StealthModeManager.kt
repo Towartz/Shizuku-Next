@@ -2,15 +2,16 @@ package moe.shizuku.manager.hide
 
 import android.content.ComponentName
 import android.content.Context
-import android.content.pm.PackageManager
 import android.util.Log
 import moe.shizuku.manager.AppConstants
 import moe.shizuku.manager.ShizukuSettings
 import moe.shizuku.manager.ktx.setComponentEnabled
 import moe.shizuku.manager.legacy.LegacyIsNotSupportedActivity
 import moe.shizuku.manager.legacy.ShellRequestHandlerActivity
+import moe.shizuku.manager.receiver.BootCompleteReceiver
 import moe.shizuku.manager.receiver.ManualStartReceiver
 import moe.shizuku.manager.receiver.ManualStopReceiver
+import moe.shizuku.manager.receiver.ShizukuReceiver
 
 object StealthModeManager {
 
@@ -18,7 +19,9 @@ object StealthModeManager {
         ShellRequestHandlerActivity::class.java,
         LegacyIsNotSupportedActivity::class.java,
         ManualStartReceiver::class.java,
-        ManualStopReceiver::class.java
+        ManualStopReceiver::class.java,
+        ShizukuReceiver::class.java,
+        BootCompleteReceiver::class.java
     )
 
     fun isStealthModeEnabled(context: Context): Boolean {
