@@ -1,5 +1,6 @@
 plugins {
     id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
 }
 
 android {
@@ -7,8 +8,16 @@ android {
     buildFeatures {
         buildConfig = false
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
 }
 
 dependencies {
+    api project(':api')
+    api libs.kotlinx.coroutines.android
+    api libs.androidx.annotation
     compileOnly libs.hidden.stub
 }
