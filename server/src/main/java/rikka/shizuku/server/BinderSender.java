@@ -139,6 +139,14 @@ public class BinderSender {
     }
 
     private static void sendBinder(int uid, int pid) throws RemoteException {
+        if (sShizukuService != null && sShizukuService.getConfigManager() != null) {
+            ConfigPackageEntry configEntry = sShizukuService.getConfigManager().find(uid);
+            if (configEntry != null && ((configEntry.flags & ServerConstants.FLAG_HIDDEN) != 0)) {
+                LOGGER.d("sendBinder: skipping hidden target UID %d", uid);
+                return;
+            }
+        }
+
         List<String> packages = PackageManagerApis.getPackagesForUidNoThrow(uid);
         if (packages.isEmpty())
             return;

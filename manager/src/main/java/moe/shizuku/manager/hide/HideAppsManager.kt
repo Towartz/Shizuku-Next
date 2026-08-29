@@ -1,5 +1,6 @@
 package moe.shizuku.manager.hide
 
+import android.app.ActivityManager
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
@@ -15,6 +16,12 @@ import rikka.shizuku.Shizuku
 import java.util.concurrent.ConcurrentHashMap
 
 object HideAppsManager {
+
+    const val FLAG_HIDDEN = 1 shl 3
+    const val MASK_HIDDEN = FLAG_HIDDEN
+    private const val FLAG_ALLOWED = 1 shl 1
+    private const val FLAG_DENIED = 1 shl 2
+    private const val MASK_PERMISSION = FLAG_ALLOWED or FLAG_DENIED
 
     private val cachedHiddenPackages = ConcurrentHashMap.newKeySet<String>()
     private val uidCache = ConcurrentHashMap<Int, Boolean>()
@@ -70,6 +77,26 @@ object HideAppsManager {
         val prefs = ShizukuSettings.getPreferences()
         prefs.edit().putStringSet(ShizukuSettings.HIDDEN_APPS_SET, HashSet(cachedHiddenPackages)).apply()
         Log.i(AppConstants.TAG, "HideAppsManager: updated $packageName hidden=$hidden (total hidden=${cachedHiddenPackages.size})")
+
+        if (Shizuku.pingBinder()) {
+            try {
+                val pm = context.packageManager
+                val ai = pm.getApplicationInfo(packageName, 0)
+                val uid = ai.uid
+                val mask = MASK_HIDDEN or MASK_PERMISSION
+                val value = if (hidden) FLAG_HIDDEN or FLAG_DENIED else 0
+                Shizuku.updateFlagsForUid(uid, mask, value)
+                if (hidden) {
+                    try {
+                        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+                        am?.killBackgroundProcesses(packageName)
+                    } catch (_: Throwable) {
+                    }
+                }
+            } catch (e: Throwable) {
+                LOGGER.w(e, "HideAppsManager: failed to sync updateFlagsForUid for $packageName")
+            }
+        }
     }
 
     fun getInstalledApps(context: Context): List<PackageInfo> {

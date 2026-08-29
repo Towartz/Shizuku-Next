@@ -87,6 +87,8 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
         return PackageManagerApis.getApplicationInfoNoThrow(MANAGER_APPLICATION_ID, 0, 0);
     }
 
+    private static ShizukuService sInstance;
+
     @SuppressWarnings({"FieldCanBeLocal"})
     private final Handler mainHandler = new Handler(Looper.myLooper());
     //private final Context systemContext = HiddenApiBridge.getSystemContext();
@@ -96,6 +98,7 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
 
     public ShizukuService() {
         super();
+        sInstance = this;
 
         HandlerUtil.setMainHandler(mainHandler);
 
@@ -209,6 +212,14 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
         }
 
         isManager = MANAGER_APPLICATION_ID.equals(requestPackageName);
+
+        if (!isManager && configManager != null) {
+            ConfigPackageEntry configEntry = configManager.find(callingUid);
+            if (configEntry != null && (configEntry.flags & ServerConstants.FLAG_HIDDEN) != 0) {
+                LOGGER.w("attachApplication: rejected hidden target UID %d (%s)", callingUid, requestPackageName);
+                throw new SecurityException("Shizuku service is unavailable");
+            }
+        }
 
         if (clientManager.findClient(callingUid, callingPid) == null) {
             synchronized (this) {
@@ -413,6 +424,21 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
             }
         }
 
+        if ((mask & ServerConstants.MASK_HIDDEN) != 0) {
+            boolean hidden = (value & ServerConstants.FLAG_HIDDEN) != 0;
+            if (hidden) {
+                List<ClientRecord> records = clientManager.findClients(uid);
+                for (ClientRecord record : records) {
+                    record.allowed = false;
+                    ActivityManagerApis.forceStopPackageNoThrow(record.packageName, UserHandleCompat.getUserId(record.uid));
+                }
+                for (String packageName : PackageManagerApis.getPackagesForUidNoThrow(uid)) {
+                    ActivityManagerApis.forceStopPackageNoThrow(packageName, userId);
+                    PermissionManagerApis.revokeRuntimePermission(packageName, PERMISSION, userId);
+                }
+            }
+        }
+
         configManager.update(uid, null, mask, value);
     }
 
@@ -512,6 +538,17 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
     }
 
     static void sendBinderToUserApp(Binder binder, String packageName, int userId, boolean retry) {
+        if (!MANAGER_APPLICATION_ID.equals(packageName) && sInstance != null && sInstance.configManager != null) {
+            ApplicationInfo ai = PackageManagerApis.getApplicationInfoNoThrow(packageName, 0, userId);
+            if (ai != null) {
+                ConfigPackageEntry configEntry = sInstance.configManager.find(ai.uid);
+                if (configEntry != null && (configEntry.flags & ServerConstants.FLAG_HIDDEN) != 0) {
+                    LOGGER.d("sendBinderToUserApp: skipping hidden target %s (uid %d)", packageName, ai.uid);
+                    return;
+                }
+            }
+        }
+
         try {
             DeviceIdleControllerApis.addPowerSaveTempWhitelistApp(packageName, 30 * 1000, userId,
                     316/* PowerExemptionManager#REASON_SHELL */, "shell");
