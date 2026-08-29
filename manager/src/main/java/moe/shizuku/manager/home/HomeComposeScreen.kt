@@ -2,6 +2,7 @@ package moe.shizuku.manager.home
 
 import android.content.Intent
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,18 +17,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Computer
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material.icons.outlined.Terminal
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.AlertDialog
@@ -37,17 +42,18 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,17 +64,20 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import moe.shizuku.manager.Helps
 import moe.shizuku.manager.R
+import moe.shizuku.manager.hide.HideAppsActivity
+import moe.shizuku.manager.hide.HideAppsManager
 import moe.shizuku.manager.model.ServiceStatus
 import moe.shizuku.manager.starter.Starter
 import moe.shizuku.manager.ui.theme.ShizukuComposeTheme
 import moe.shizuku.manager.utils.EnvironmentUtils
 import moe.shizuku.manager.utils.UserHandleCompat
 import rikka.html.text.HtmlCompat
-import androidx.core.net.toUri
 
 @Composable
 fun HomeComposeScreen(
@@ -134,26 +143,18 @@ private fun HomeScreenContent(
     val context = LocalContext.current
     var menuExpanded by remember { mutableStateOf(false) }
     var dialog by remember { mutableStateOf<HomeDialog?>(null) }
+    val resolvedStatus = status ?: ServiceStatus()
+    val running = resolvedStatus.isRunning
+    val isRoot = EnvironmentUtils.isRooted()
+    val hiddenCount = remember(context) {
+        HideAppsManager.getHiddenPackages(context).size
+    }
+
     val versionName = remember {
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }
             .getOrNull()
             .orEmpty()
     }
-    val items = buildHomeItems(
-        context = context,
-        status = status,
-        grantedCount = grantedCount,
-        onManageApps = onManageApps,
-        onOpenTerminal = onOpenTerminal,
-        onStartRoot = onStartRoot,
-        onRestartRoot = onRestartRoot,
-        onShowAdbCommand = { dialog = HomeDialog.AdbCommand },
-        onOpenWirelessGuide = onOpenWirelessGuide,
-        onPairWireless = onPairWireless,
-        onStartWirelessAdb = onStartWirelessAdb,
-        onOpenAdbPermissionHelp = onOpenAdbPermissionHelp,
-        onOpenLearnMore = onOpenLearnMore
-    )
 
     BackHandler(onBack = onNavigateBack)
 
@@ -162,7 +163,12 @@ private fun HomeScreenContent(
         contentColor = MaterialTheme.colorScheme.onBackground,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
+                title = {
+                    Text(
+                        text = stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                },
                 actions = {
                     IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.settings_title))
@@ -178,7 +184,7 @@ private fun HomeScreenContent(
                             text = { Text(stringResource(R.string.hide_apps_title)) },
                             onClick = {
                                 menuExpanded = false
-                                context.startActivity(Intent(context, moe.shizuku.manager.hide.HideAppsActivity::class.java))
+                                context.startActivity(Intent(context, HideAppsActivity::class.java))
                             }
                         )
                         DropdownMenuItem(
@@ -188,7 +194,7 @@ private fun HomeScreenContent(
                                 dialog = HomeDialog.About
                             }
                         )
-                        if (status?.isRunning == true) {
+                        if (running) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.action_stop)) },
                                 onClick = {
@@ -205,23 +211,164 @@ private fun HomeScreenContent(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-                start = 20.dp,
-                top = innerPadding.calculateTopPadding() + 12.dp,
-                end = 20.dp,
-                bottom = innerPadding.calculateBottomPadding() + 20.dp
+                start = 16.dp,
+                top = innerPadding.calculateTopPadding() + 8.dp,
+                end = 16.dp,
+                bottom = innerPadding.calculateBottomPadding() + 24.dp
             ),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(items) { item ->
-                when (item) {
-                    is HomeUiItem.Status -> StatusCard(item)
-                    is HomeUiItem.Action -> ActionCard(item)
+            // 1. Dynamic Hero Status Banner
+            item {
+                HeroStatusBanner(
+                    status = resolvedStatus,
+                    running = running,
+                    onStopService = { dialog = HomeDialog.Stop },
+                    onRestartRoot = onRestartRoot
+                )
+            }
+
+            // 2. At-a-Glance Metric Grid
+            item {
+                MetricGridRow(
+                    grantedCount = grantedCount ?: 0,
+                    hiddenCount = hiddenCount,
+                    running = running,
+                    onManageApps = onManageApps,
+                    onOpenHideApps = { context.startActivity(Intent(context, HideAppsActivity::class.java)) },
+                    onOpenTerminal = onOpenTerminal
+                )
+            }
+
+            // 3. Management & Security Section
+            item {
+                SectionHeader(title = stringResource(R.string.home_section_management))
+            }
+
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FeatureTile(
+                        icon = Icons.Outlined.Security,
+                        title = context.resources.getQuantityString(
+                            R.plurals.home_app_management_authorized_apps_count,
+                            grantedCount ?: 0,
+                            grantedCount ?: 0
+                        ),
+                        summary = if (running) {
+                            stringResource(R.string.home_app_management_view_authorized_apps)
+                        } else {
+                            stringResource(R.string.home_status_service_not_running, stringResource(R.string.app_name))
+                        },
+                        enabled = running,
+                        onClick = onManageApps
+                    )
+                    FeatureTile(
+                        icon = Icons.Outlined.VisibilityOff,
+                        title = stringResource(R.string.hide_apps_title),
+                        summary = if (hiddenCount > 0) {
+                            stringResource(R.string.hide_apps_count, hiddenCount)
+                        } else {
+                            stringResource(R.string.settings_hide_from_apps_summary)
+                        },
+                        enabled = true,
+                        onClick = { context.startActivity(Intent(context, HideAppsActivity::class.java)) }
+                    )
+                    FeatureTile(
+                        icon = Icons.Outlined.Terminal,
+                        title = stringResource(R.string.home_terminal_title),
+                        summary = stringResource(R.string.home_terminal_description),
+                        enabled = running,
+                        onClick = onOpenTerminal
+                    )
                 }
+            }
+
+            // 4. Limited ADB Warning (if applicable)
+            if (running && !resolvedStatus.permission) {
+                item {
+                    WarningBanner(
+                        title = stringResource(R.string.home_adb_is_limited_title),
+                        summary = stringResource(R.string.home_adb_is_limited_description),
+                        actionLabel = stringResource(R.string.home_adb_button_view_help),
+                        onAction = onOpenAdbPermissionHelp
+                    )
+                }
+            }
+
+            // 5. Start Methods Section
+            item {
+                SectionHeader(title = stringResource(R.string.home_section_start_methods))
+            }
+
+            // Wireless Debugging Card (Android 11+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R || EnvironmentUtils.getAdbTcpPort() > 0) {
+                item {
+                    StartMethodCard(
+                        icon = Icons.Outlined.Wifi,
+                        title = stringResource(R.string.home_wireless_adb_title),
+                        summary = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            plainText(stringResource(R.string.home_wireless_adb_description))
+                        } else {
+                            plainText(stringResource(R.string.home_wireless_adb_description_pre_11))
+                        },
+                        primaryLabel = stringResource(R.string.home_root_button_start),
+                        secondaryLabel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) stringResource(R.string.adb_pairing) else null,
+                        tertiaryLabel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) stringResource(R.string.home_wireless_adb_view_guide_button) else null,
+                        onPrimary = onStartWirelessAdb,
+                        onSecondary = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) onPairWireless else null,
+                        onTertiary = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) onOpenWirelessGuide else null
+                    )
+                }
+            }
+
+            // Root Access Card
+            if (UserHandleCompat.myUserId() == 0) {
+                val rootRestart = running && resolvedStatus.uid == 0
+                item {
+                    StartMethodCard(
+                        icon = Icons.Outlined.PlayArrow,
+                        title = stringResource(R.string.home_root_title),
+                        summary = plainText(
+                            buildString {
+                                append(stringResource(R.string.home_root_description, "Don't kill my app!"))
+                                if (running) {
+                                    append("<p>")
+                                    append(stringResource(R.string.home_root_description_sui, "Sui", "Sui"))
+                                }
+                            }
+                        ),
+                        primaryLabel = if (rootRestart) stringResource(R.string.home_root_button_restart) else stringResource(R.string.home_root_button_start),
+                        onPrimary = if (rootRestart) onRestartRoot else onStartRoot
+                    )
+                }
+            }
+
+            // Computer ADB Card
+            item {
+                StartMethodCard(
+                    icon = Icons.Outlined.Computer,
+                    title = stringResource(R.string.home_adb_title),
+                    summary = plainText(stringResource(R.string.home_adb_description, Helps.ADB.get())),
+                    primaryLabel = stringResource(R.string.home_adb_button_view_command),
+                    onPrimary = { dialog = HomeDialog.AdbCommand }
+                )
+            }
+
+            // 6. Learn More Footer Tile
+            item {
+                FeatureTile(
+                    icon = Icons.Outlined.Info,
+                    title = stringResource(R.string.home_learn_more_title),
+                    summary = stringResource(R.string.home_learn_more_description),
+                    enabled = true,
+                    onClick = onOpenLearnMore
+                )
             }
         }
     }
 
-    when (val state = dialog) {
+    // Dialogs
+    when (dialog) {
         HomeDialog.About -> {
             AlertDialog(
                 onDismissRequest = { dialog = null },
@@ -237,7 +384,7 @@ private fun HomeScreenContent(
                         Text(text = versionName)
                         LinkRow(
                             label = plainText(context.getString(R.string.about_view_source_code, "GitHub")),
-                            url = "https://github.com/HSSkyBoy/Shizuku"
+                            url = "https://github.com/Towartz/Shizuku-mod"
                         )
                         LinkRow(
                             label = plainText(context.getString(R.string.about_follow_channel, "t.me/np_nbcn")),
@@ -310,6 +457,361 @@ private fun HomeScreenContent(
 }
 
 @Composable
+private fun HeroStatusBanner(
+    status: ServiceStatus,
+    running: Boolean,
+    onStopService: () -> Unit,
+    onRestartRoot: () -> Unit
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = if (running) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+            } else {
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+            }
+        ),
+        shape = MaterialTheme.shapes.extraLarge,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = if (running) Icons.Outlined.CheckCircle else Icons.Outlined.Warning,
+                    contentDescription = null,
+                    tint = if (running) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(36.dp)
+                )
+                Spacer(modifier = Modifier.size(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (running) {
+                            stringResource(R.string.home_status_service_is_running, stringResource(R.string.app_name))
+                        } else {
+                            stringResource(R.string.home_status_service_not_running, stringResource(R.string.app_name))
+                        },
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = if (running) {
+                            stringResource(
+                                R.string.home_status_service_version,
+                                if (status.uid == 0) "Root" else "ADB",
+                                status.versionName
+                            )
+                        } else {
+                            stringResource(R.string.home_status_inactive)
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.size(8.dp))
+                Surface(
+                    shape = MaterialTheme.shapes.extraLarge,
+                    color = if (running) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                ) {
+                    Text(
+                        text = if (running) stringResource(R.string.home_status_active) else stringResource(R.string.home_status_inactive),
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                        color = if (running) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onError,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            if (running) {
+                Spacer(modifier = Modifier.height(14.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (status.uid == 0) {
+                        TextButton(onClick = onRestartRoot) {
+                            Icon(Icons.Outlined.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(stringResource(R.string.home_root_button_restart))
+                        }
+                    }
+                    TextButton(onClick = onStopService) {
+                        Icon(Icons.Outlined.Stop, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(stringResource(R.string.action_stop))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MetricGridRow(
+    grantedCount: Int,
+    hiddenCount: Int,
+    running: Boolean,
+    onManageApps: () -> Unit,
+    onOpenHideApps: () -> Unit,
+    onOpenTerminal: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        MetricTile(
+            modifier = Modifier.weight(1f),
+            icon = Icons.Outlined.Security,
+            count = "$grantedCount",
+            label = stringResource(R.string.home_metric_authorized),
+            enabled = running,
+            onClick = onManageApps
+        )
+        MetricTile(
+            modifier = Modifier.weight(1f),
+            icon = Icons.Outlined.VisibilityOff,
+            count = "$hiddenCount",
+            label = stringResource(R.string.home_metric_hidden),
+            enabled = true,
+            onClick = onOpenHideApps
+        )
+        MetricTile(
+            modifier = Modifier.weight(1f),
+            icon = Icons.Outlined.Terminal,
+            count = "rish",
+            label = stringResource(R.string.home_metric_terminal),
+            enabled = running,
+            onClick = onOpenTerminal
+        )
+    }
+}
+
+@Composable
+private fun MetricTile(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    count: String,
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier.clickable(enabled = enabled, onClick = onClick),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.8f)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = count,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+    )
+}
+
+@Composable
+private fun FeatureTile(
+    icon: ImageVector,
+    title: String,
+    summary: String,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled, onClick = onClick),
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(28.dp)
+            )
+            Spacer(modifier = Modifier.size(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = summary,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(modifier = Modifier.size(8.dp))
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.ArrowForwardIos,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                modifier = Modifier.size(14.dp)
+            )
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun StartMethodCard(
+    icon: ImageVector,
+    title: String,
+    summary: String,
+    primaryLabel: String? = null,
+    secondaryLabel: String? = null,
+    tertiaryLabel: String? = null,
+    onPrimary: (() -> Unit)? = null,
+    onSecondary: (() -> Unit)? = null,
+    onTertiary: (() -> Unit)? = null
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.size(14.dp))
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = summary,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (primaryLabel != null || secondaryLabel != null || tertiaryLabel != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    tertiaryLabel?.let { label ->
+                        OutlinedButton(onClick = { onTertiary?.invoke() }) {
+                            Text(label)
+                        }
+                    }
+                    secondaryLabel?.let { label ->
+                        FilledTonalButton(onClick = { onSecondary?.invoke() }) {
+                            Text(label)
+                        }
+                    }
+                    primaryLabel?.let { label ->
+                        Button(onClick = { onPrimary?.invoke() }) {
+                            Text(label)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WarningBanner(
+    title: String,
+    summary: String,
+    actionLabel: String,
+    onAction: () -> Unit
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f)
+        ),
+        shape = MaterialTheme.shapes.extraLarge,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Outlined.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.size(12.dp))
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(onClick = onAction) {
+                Text(actionLabel)
+            }
+        }
+    }
+}
+
+@Composable
 private fun LinkRow(label: String, url: String) {
     val context = LocalContext.current
     Text(
@@ -331,328 +833,6 @@ private enum class HomeDialog {
     About,
     Stop,
     AdbCommand
-}
-
-private fun buildHomeItems(
-    context: android.content.Context,
-    status: ServiceStatus?,
-    grantedCount: Int?,
-    onManageApps: () -> Unit,
-    onOpenTerminal: () -> Unit,
-    onStartRoot: () -> Unit,
-    onRestartRoot: () -> Unit,
-    onShowAdbCommand: () -> Unit,
-    onOpenWirelessGuide: () -> Unit,
-    onPairWireless: () -> Unit,
-    onStartWirelessAdb: () -> Unit,
-    onOpenAdbPermissionHelp: () -> Unit,
-    onOpenLearnMore: () -> Unit
-): List<HomeUiItem> {
-    val resolvedStatus = status ?: ServiceStatus()
-    val running = resolvedStatus.isRunning
-    val items = mutableListOf<HomeUiItem>()
-
-    items += HomeUiItem.Status(
-        title = if (running) {
-            context.getString(R.string.home_status_service_is_running, context.getString(R.string.app_name))
-        } else {
-            context.getString(R.string.home_status_service_not_running, context.getString(R.string.app_name))
-        },
-        summary = if (running) {
-            context.getString(
-                R.string.home_status_service_version,
-                if (resolvedStatus.uid == 0) "root" else "adb",
-                resolvedStatus.versionName
-            )
-        } else null,
-        running = running
-    )
-
-    if (resolvedStatus.permission) {
-        items += HomeUiItem.Action(
-            title = context.resources.getQuantityString(
-                R.plurals.home_app_management_authorized_apps_count,
-                grantedCount ?: 0,
-                grantedCount ?: 0
-            ),
-            summary = if (running) {
-                context.getString(R.string.home_app_management_view_authorized_apps)
-            } else {
-                context.getString(R.string.home_status_service_not_running, context.getString(R.string.app_name))
-            },
-            icon = Icons.Outlined.Security,
-            enabled = running,
-            onClick = onManageApps
-        )
-        items += HomeUiItem.Action(
-            title = context.getString(R.string.home_terminal_title),
-            summary = if (running) {
-                context.getString(R.string.home_terminal_description)
-            } else {
-                context.getString(R.string.home_status_service_not_running, context.getString(R.string.app_name))
-            },
-            icon = Icons.Outlined.Terminal,
-            enabled = running,
-            onClick = onOpenTerminal
-        )
-        val hiddenCount = moe.shizuku.manager.hide.HideAppsManager.getHiddenPackages(context).size
-        items += HomeUiItem.Action(
-            title = context.getString(R.string.hide_apps_title),
-            summary = if (hiddenCount > 0) {
-                context.getString(R.string.hide_apps_count, hiddenCount)
-            } else {
-                context.getString(R.string.settings_hide_from_apps_summary)
-            },
-            icon = Icons.Outlined.Security,
-            enabled = true,
-            onClick = { context.startActivity(Intent(context, moe.shizuku.manager.hide.HideAppsActivity::class.java)) }
-        )
-    }
-
-    if (running && !resolvedStatus.permission) {
-        items += HomeUiItem.Action(
-            title = context.getString(R.string.home_adb_is_limited_title),
-            summary = context.getString(R.string.home_adb_is_limited_description),
-            icon = Icons.Outlined.Warning,
-            enabled = true,
-            tonal = false,
-            primaryActionLabel = context.getString(R.string.home_adb_button_view_help),
-            onPrimaryAction = onOpenAdbPermissionHelp
-        )
-    }
-
-    if (UserHandleCompat.myUserId() == 0) {
-        val root = EnvironmentUtils.isRooted()
-        val rootRestart = running && resolvedStatus.uid == 0
-        if (root) {
-            items += rootItem(context, running, rootRestart, onStartRoot, onRestartRoot)
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R || EnvironmentUtils.getAdbTcpPort() > 0) {
-            items += HomeUiItem.Action(
-                title = context.getString(R.string.home_wireless_adb_title),
-                summary = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    plainText(context.getString(R.string.home_wireless_adb_description))
-                } else {
-                    plainText(context.getString(R.string.home_wireless_adb_description_pre_11))
-                },
-                icon = Icons.Outlined.Wifi,
-                enabled = true,
-                primaryActionLabel = context.getString(R.string.home_root_button_start),
-                secondaryActionLabel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) context.getString(R.string.adb_pairing) else null,
-                tertiaryActionLabel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) context.getString(R.string.home_wireless_adb_view_guide_button) else null,
-                onPrimaryAction = onStartWirelessAdb,
-                onSecondaryAction = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) onPairWireless else null,
-                onTertiaryAction = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) onOpenWirelessGuide else null
-            )
-        }
-
-        items += HomeUiItem.Action(
-            title = context.getString(R.string.home_adb_title),
-            summary = plainText(context.getString(R.string.home_adb_description, Helps.ADB.get())),
-            icon = Icons.Outlined.Computer,
-            enabled = true,
-            primaryActionLabel = context.getString(R.string.home_adb_button_view_command),
-            onPrimaryAction = onShowAdbCommand
-        )
-
-        if (!root) {
-            items += rootItem(context, running, rootRestart, onStartRoot, onRestartRoot)
-        }
-    }
-
-    items += HomeUiItem.Action(
-        title = context.getString(R.string.home_learn_more_title),
-        summary = context.getString(R.string.home_learn_more_description),
-        icon = Icons.Outlined.Info,
-        enabled = true,
-        onClick = onOpenLearnMore
-    )
-    return items
-}
-
-private fun rootItem(
-    context: android.content.Context,
-    running: Boolean,
-    rootRestart: Boolean,
-    onStartRoot: () -> Unit,
-    onRestartRoot: () -> Unit
-) = HomeUiItem.Action(
-    title = context.getString(R.string.home_root_title),
-    summary = plainText(
-        buildString {
-            append(context.getString(R.string.home_root_description, "Don't kill my app!"))
-            if (running) {
-                append("<p>")
-                append(
-                    context.getString(
-                        R.string.home_root_description_sui,
-                        "Sui",
-                        "Sui"
-                    )
-                )
-            }
-        }
-    ),
-    icon = Icons.Outlined.PlayArrow,
-    enabled = true,
-    primaryActionLabel = if (rootRestart) context.getString(R.string.home_root_button_restart) else context.getString(R.string.home_root_button_start),
-    onPrimaryAction = if (rootRestart) onRestartRoot else onStartRoot
-)
-
-@Composable
-private fun StatusCard(item: HomeUiItem.Status) {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = (if (item.running) {
-                MaterialTheme.colorScheme.surfaceContainerHigh
-            } else {
-                MaterialTheme.colorScheme.errorContainer
-            }).copy(alpha = 0.7f),
-            contentColor = if (item.running) {
-                MaterialTheme.colorScheme.onSurface
-            } else {
-                MaterialTheme.colorScheme.onErrorContainer
-            }
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = MaterialTheme.shapes.extraLarge
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = if (item.running) Icons.Outlined.Link else Icons.Outlined.Warning,
-                contentDescription = null,
-                modifier = Modifier.size(28.dp),
-                tint = if (item.running) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-            )
-            Column(
-                modifier = Modifier
-                    .padding(start = 16.dp)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Text(item.title, style = MaterialTheme.typography.titleLarge)
-                item.summary?.let {
-                    Text(it, style = MaterialTheme.typography.bodyMedium)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-@OptIn(ExperimentalLayoutApi::class)
-private fun ActionCard(item: HomeUiItem.Action) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = item.onClick != null && item.enabled) { item.onClick?.invoke() },
-        colors = CardDefaults.cardColors(
-            containerColor = (if (item.tonal) {
-                MaterialTheme.colorScheme.surfaceContainerLow
-            } else {
-                MaterialTheme.colorScheme.errorContainer
-            }).copy(alpha = 0.7f),
-            contentColor = if (item.tonal) {
-                MaterialTheme.colorScheme.onSurface
-            } else {
-                MaterialTheme.colorScheme.onErrorContainer
-            }
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = MaterialTheme.shapes.extraLarge
-    ) {
-        Column(modifier = Modifier.padding(24.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    item.icon,
-                    contentDescription = null,
-                    tint = if (item.tonal) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                )
-                Text(
-                    text = item.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(start = 16.dp),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            Spacer(modifier = Modifier.height(14.dp))
-            Text(item.summary, style = MaterialTheme.typography.bodyMedium)
-            if (item.primaryActionLabel != null || item.secondaryActionLabel != null || item.tertiaryActionLabel != null) {
-                Spacer(modifier = Modifier.height(18.dp))
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    item.tertiaryActionLabel?.let { label ->
-                        OutlinedButton(onClick = { item.onTertiaryAction?.invoke() }) {
-                            Text(label)
-                        }
-                    }
-                    item.secondaryActionLabel?.let { label ->
-                        OutlinedButton(onClick = { item.onSecondaryAction?.invoke() }) {
-                            Text(label)
-                        }
-                    }
-                    item.primaryActionLabel?.let { label ->
-                        Button(onClick = { item.onPrimaryAction?.invoke() }) {
-                            Text(label)
-                        }
-                    }
-                }
-            } else if (item.onClick != null && item.enabled) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.action_open),
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.labelLarge
-                        )
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
-                            contentDescription = stringResource(R.string.action_open),
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Immutable
-private sealed interface HomeUiItem {
-    data class Status(
-        val title: String,
-        val summary: String?,
-        val running: Boolean
-    ) : HomeUiItem
-
-    data class Action(
-        val title: String,
-        val summary: String,
-        val icon: ImageVector,
-        val enabled: Boolean,
-        val tonal: Boolean = true,
-        val onClick: (() -> Unit)? = null,
-        val primaryActionLabel: String? = null,
-        val secondaryActionLabel: String? = null,
-        val tertiaryActionLabel: String? = null,
-        val onPrimaryAction: (() -> Unit)? = null,
-        val onSecondaryAction: (() -> Unit)? = null,
-        val onTertiaryAction: (() -> Unit)? = null
-    ) : HomeUiItem
 }
 
 private fun plainText(value: String): String {
