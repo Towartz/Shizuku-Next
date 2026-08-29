@@ -36,23 +36,22 @@ data class ShizukuExecResult(
 /**
  * Flow emitting the alive status of the Shizuku server binder.
  */
-val Shizuku.Companion.binderAliveFlow: Flow<Boolean>
-    get() = callbackFlow {
-        val receivedListener = Shizuku.OnBinderReceivedListener {
-            trySend(true)
-        }
-        val deadListener = Shizuku.OnBinderDeadListener {
-            trySend(false)
-        }
-
-        Shizuku.addBinderReceivedListenerSticky(receivedListener)
-        Shizuku.addBinderDeadListener(deadListener)
-
-        awaitClose {
-            Shizuku.removeBinderReceivedListener(receivedListener)
-            Shizuku.removeBinderDeadListener(deadListener)
-        }
+fun shizukuBinderAliveFlow(): Flow<Boolean> = callbackFlow {
+    val receivedListener = Shizuku.OnBinderReceivedListener {
+        trySend(true)
     }
+    val deadListener = Shizuku.OnBinderDeadListener {
+        trySend(false)
+    }
+
+    Shizuku.addBinderReceivedListenerSticky(receivedListener)
+    Shizuku.addBinderDeadListener(deadListener)
+
+    awaitClose {
+        Shizuku.removeBinderReceivedListener(receivedListener)
+        Shizuku.removeBinderDeadListener(deadListener)
+    }
+}
 
 /**
  * Suspends until the Shizuku server binder is ready and received.
@@ -61,7 +60,7 @@ val Shizuku.Companion.binderAliveFlow: Flow<Boolean>
  * @return The server [IBinder].
  * @throws ShizukuNotRunningException If the timeout expires before the binder is received.
  */
-suspend fun Shizuku.Companion.awaitBinder(timeoutMillis: Long = 10_000L): IBinder {
+suspend fun awaitShizukuBinder(timeoutMillis: Long = 10_000L): IBinder {
     if (Shizuku.pingBinder()) {
         return Shizuku.getBinder() ?: throw ShizukuNotRunningException()
     }
@@ -100,7 +99,7 @@ suspend fun Shizuku.Companion.awaitBinder(timeoutMillis: Long = 10_000L): IBinde
  * @param requestCode Application specific request code (default 1001).
  * @return True if permission is granted, false otherwise.
  */
-suspend fun Shizuku.Companion.requestPermissionResult(requestCode: Int = 1001): Boolean {
+suspend fun requestShizukuPermission(requestCode: Int = 1001): Boolean {
     if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
         return true
     }
@@ -139,7 +138,7 @@ suspend fun Shizuku.Companion.requestPermissionResult(requestCode: Int = 1001): 
  * @param asInterface Lambda converting [IBinder] to the AIDL interface [T].
  * @return The AIDL interface [T] once connected.
  */
-suspend fun <T : IInterface> Shizuku.Companion.bindUserService(
+suspend fun <T : IInterface> bindShizukuUserService(
     args: Shizuku.UserServiceArgs,
     asInterface: (IBinder) -> T
 ): T {
