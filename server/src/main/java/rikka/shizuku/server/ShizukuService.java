@@ -290,9 +290,17 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
 
         PackageInfo pi = PackageManagerApis.getPackageInfoNoThrow(managerPackage, 0, userId);
         UserInfo userInfo = UserManagerApis.getUserInfo(userId);
-        boolean isWorkProfileUser = BuildUtils.atLeast30() ?
-                "android.os.usertype.profile.MANAGED".equals(userInfo.userType) :
-                (userInfo.flags & UserInfo.FLAG_MANAGED_PROFILE) != 0;
+        boolean isWorkProfileUser = false;
+        if (userInfo != null) {
+            if (BuildUtils.atLeast30() && userInfo.userType != null) {
+                isWorkProfileUser = "android.os.usertype.profile.MANAGED".equals(userInfo.userType)
+                        || "android.os.usertype.profile.PRIVATE".equals(userInfo.userType)
+                        || "android.os.usertype.profile.CLONE".equals(userInfo.userType)
+                        || "android.os.usertype.profile.COMMUNAL".equals(userInfo.userType);
+            } else {
+                isWorkProfileUser = (userInfo.flags & UserInfo.FLAG_MANAGED_PROFILE) != 0;
+            }
+        }
         if (pi == null && !isWorkProfileUser) {
             LOGGER.w("Manager not found in non work profile user %d. Revoke permission", userId);
             clientRecord.dispatchRequestPermissionResult(requestCode, false);

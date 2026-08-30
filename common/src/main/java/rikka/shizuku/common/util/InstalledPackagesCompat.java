@@ -52,15 +52,38 @@ public final class InstalledPackagesCompat {
             return Collections.emptyList();
         }
 
-        String resultClassName = result.getClass().getName();
-        if (Build.VERSION.SDK_INT >= ANDROID_17 && PACKAGE_INFO_LIST.equals(resultClassName)) {
-            Object list = result.getClass().getField("list").get(result);
-            return list == null ? Collections.emptyList() : (List<PackageInfo>) list;
+        if (result instanceof List) {
+            return (List<PackageInfo>) result;
         }
 
-        if (PARCELED_LIST_SLICE.equals(resultClassName)) {
-            Object list = result.getClass().getMethod("getList").invoke(result);
-            return list == null ? Collections.emptyList() : (List<PackageInfo>) list;
+        String resultClassName = result.getClass().getName();
+        if (PACKAGE_INFO_LIST.equals(resultClassName) || resultClassName.endsWith(".PackageInfoList")) {
+            try {
+                Object list = result.getClass().getField("list").get(result);
+                if (list instanceof List) {
+                    return (List<PackageInfo>) list;
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+
+        try {
+            Method getListMethod = result.getClass().getMethod("getList");
+            Object list = getListMethod.invoke(result);
+            if (list instanceof List) {
+                return (List<PackageInfo>) list;
+            }
+        } catch (Throwable ignored) {
+        }
+
+        try {
+            var field = result.getClass().getDeclaredField("list");
+            field.setAccessible(true);
+            Object list = field.get(result);
+            if (list instanceof List) {
+                return (List<PackageInfo>) list;
+            }
+        } catch (Throwable ignored) {
         }
 
         throw new IllegalStateException("Unsupported getInstalledPackages return type: " + resultClassName);
