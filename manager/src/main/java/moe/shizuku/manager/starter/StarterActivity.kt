@@ -182,7 +182,7 @@ private class ViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             if (Shizuku.pingBinder()) {
-                sb.append("Stopping active Shizuku service gracefully...").append('\n')
+                sb.append("Active Shizuku service detected — sending graceful shutdown signal...").append('\n')
                 postResult()
                 try {
                     Shizuku.exit()
@@ -225,7 +225,7 @@ private class ViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             if (Shizuku.pingBinder()) {
-                sb.append("Stopping active Shizuku service gracefully...").append('\n')
+                sb.append("Active Shizuku service detected — sending graceful shutdown signal...").append('\n')
                 postResult()
                 try {
                     Shizuku.exit()

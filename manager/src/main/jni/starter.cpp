@@ -239,8 +239,8 @@ int main(int argc, char *argv[]) {
     printf("info: starter begin\n");
     fflush(stdout);
 
-    // kill old server
-    printf("info: killing old process...\n");
+    // check and clean up any lingering server processes
+    printf("info: checking for lingering server processes...\n");
     fflush(stdout);
 
     int killed_count = 0;
@@ -251,7 +251,7 @@ int main(int argc, char *argv[]) {
             return;
 
         if (kill(pid, SIGKILL) == 0) {
-            printf("info: killed %d (%s)\n", pid, s_target_process_name);
+            printf("info: killed lingering process %d (%s)\n", pid, s_target_process_name);
             killed_count++;
         } else if (errno == EPERM) {
             perrorf("fatal: can't kill %d, please try to stop existing Shizuku from app first.\n", pid);
@@ -262,7 +262,7 @@ int main(int argc, char *argv[]) {
     });
 
     if (killed_count == 0) {
-        printf("info: no lingering processes found (clean state)\n");
+        printf("info: process table clean (no lingering processes)\n");
     } else {
         printf("info: cleanly terminated %d lingering process(es)\n", killed_count);
     }
