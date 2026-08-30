@@ -141,4 +141,14 @@
     <string name="settings_language_system" translatable="false">Follow System</string>
     <string name="starting_on_wireless_adb" translatable="false">Starting service with wirelessADB…</string>
     <string name="starting_root_shell" translatable="false">Starting root shell…</string>
+    <string name="home_wireless_step_dev_options_title">1. Włącz debugowanie bezprzewodowe</string>
+    <string name="home_wireless_step_dev_options_desc">Połącz się z Wi-Fi i włącz debugowanie bezprzewodowe w opcjach programisty.</string>
+    <string name="home_wireless_step_pairing_title">2. Sparuj urządzenie (jednorazowo)</string>
+    <string name="home_wireless_step_pairing_desc">Sparuj urządzenie za pomocą 6-cyfrowego kodu z powiadomienia.</string>
+    <string name="home_wireless_step_start_title">3. Uruchom Shizuku</string>
+    <string name="home_wireless_step_start_desc">Połącz się z usługą debugowania bezprzewodowego i uruchom serwer.</string>
+    <string name="home_wireless_port_active">Debugowanie bezprzewodowe gotowe (Port: %d)</string>
+    <string name="home_wireless_open_dev_options">Opcje programisty</string>
+    <string name="home_wireless_btn_pair">Sparuj</string>
+    <string name="home_wireless_btn_start">Uruchom Shizuku</string>
 </resources>

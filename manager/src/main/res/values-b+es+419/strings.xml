@@ -119,4 +119,14 @@
     <string name="settings_language_system" translatable="false">Follow System</string>
     <string name="starting_on_wireless_adb" translatable="false">Starting service with wirelessADB…</string>
     <string name="starting_root_shell" translatable="false">Starting root shell…</string>
+    <string name="home_wireless_step_dev_options_title">1. Activar depuración inalámbrica</string>
+    <string name="home_wireless_step_dev_options_desc">Conéctate a Wi-Fi y activa la depuración inalámbrica en las opciones de desarrollador.</string>
+    <string name="home_wireless_step_pairing_title">2. Vincular dispositivo (una sola vez)</string>
+    <string name="home_wireless_step_pairing_desc">Vincula tu dispositivo usando el código de 6 dígitos en la notificación.</string>
+    <string name="home_wireless_step_start_title">3. Iniciar Shizuku</string>
+    <string name="home_wireless_step_start_desc">Conéctate al servicio de depuración inalámbrica activo e inicia el servidor.</string>
+    <string name="home_wireless_port_active">Depuración inalámbrica lista (puerto: %d)</string>
+    <string name="home_wireless_open_dev_options">Opciones de desarrollador</string>
+    <string name="home_wireless_btn_pair">Vincular</string>
+    <string name="home_wireless_btn_start">Iniciar Shizuku</string>
 </resources>

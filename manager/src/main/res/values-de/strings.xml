@@ -189,4 +189,14 @@
     <string name="settings_language_system" translatable="false">Follow System</string>
     <string name="starting_on_wireless_adb" translatable="false">Starting service with wirelessADB…</string>
     <string name="starting_root_shell" translatable="false">Starting root shell…</string>
+    <string name="home_wireless_step_dev_options_title">1. Wireless Debugging aktivieren</string>
+    <string name="home_wireless_step_dev_options_desc">Mit dem WLAN verbinden und Wireless Debugging in den Entwickleroptionen aktivieren.</string>
+    <string name="home_wireless_step_pairing_title">2. Gerät koppeln (einmalig)</string>
+    <string name="home_wireless_step_pairing_desc">Koppeln Sie Ihr Gerät mit dem 6-stelligen Code aus der Benachrichtigung.</string>
+    <string name="home_wireless_step_start_title">3. Shizuku starten</string>
+    <string name="home_wireless_step_start_desc">Mit dem aktiven Wireless Debugging-Dienst verbinden und den Server starten.</string>
+    <string name="home_wireless_port_active">Wireless Debugging bereit (Port: %d)</string>
+    <string name="home_wireless_open_dev_options">Entwickleroptionen</string>
+    <string name="home_wireless_btn_pair">Gerät koppeln</string>
+    <string name="home_wireless_btn_start">Shizuku starten</string>
 </resources>

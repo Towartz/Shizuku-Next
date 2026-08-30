@@ -193,4 +193,14 @@
     <string name="settings_language_system" translatable="false">Follow System</string>
     <string name="starting_on_wireless_adb" translatable="false">Starting service with wirelessADB…</string>
     <string name="starting_root_shell" translatable="false">Starting root shell…</string>
+    <string name="home_wireless_step_dev_options_title">1. 무선 디버깅 활성화</string>
+    <string name="home_wireless_step_dev_options_desc">Wi-Fi에 연결하고 개발자 옵션에서 무선 디버깅을 켭니다.</string>
+    <string name="home_wireless_step_pairing_title">2. 기기 페어링 (최초 1회)</string>
+    <string name="home_wireless_step_pairing_desc">알림에 표시된 6자리 페어링 코드로 기기를 페어링합니다.</string>
+    <string name="home_wireless_step_start_title">3. Shizuku 시작</string>
+    <string name="home_wireless_step_start_desc">활성화된 무선 디버깅 서비스에 연결하고 서버를 실행합니다.</string>
+    <string name="home_wireless_port_active">무선 디버깅 준비 완료 (포트: %d)</string>
+    <string name="home_wireless_open_dev_options">개발자 옵션</string>
+    <string name="home_wireless_btn_pair">기기 페어링</string>
+    <string name="home_wireless_btn_start">Shizuku 시작</string>
 </resources>

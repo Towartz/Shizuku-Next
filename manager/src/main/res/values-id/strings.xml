@@ -191,4 +191,14 @@
     <string name="settings_language_system" translatable="false">Follow System</string>
     <string name="starting_on_wireless_adb" translatable="false">Starting service with wirelessADB…</string>
     <string name="starting_root_shell" translatable="false">Starting root shell…</string>
+    <string name="home_wireless_step_dev_options_title">1. Aktifkan Debug Nirkabel</string>
+    <string name="home_wireless_step_dev_options_desc">Sambungkan ke Wi-Fi dan aktifkan Debug Nirkabel di Pilihan Pengembang.</string>
+    <string name="home_wireless_step_pairing_title">2. Sandingkan Perangkat (Sekali saja)</string>
+    <string name="home_wireless_step_pairing_desc">Sandingkan perangkat menggunakan kode 6 digit dari notifikasi.</string>
+    <string name="home_wireless_step_start_title">3. Mulai Shizuku</string>
+    <string name="home_wireless_step_start_desc">Hubungkan ke layanan Debug Nirkabel yang aktif dan mulai server.</string>
+    <string name="home_wireless_port_active">Debug Nirkabel Siap (Port: %d)</string>
+    <string name="home_wireless_open_dev_options">Pilihan pengembang</string>
+    <string name="home_wireless_btn_pair">Sandingkan</string>
+    <string name="home_wireless_btn_start">Mulai Shizuku</string>
 </resources>

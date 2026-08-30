@@ -186,4 +186,14 @@
     <string name="settings_language_system" translatable="false">Follow System</string>
     <string name="starting_on_wireless_adb" translatable="false">Starting service with wirelessADB…</string>
     <string name="starting_root_shell" translatable="false">Starting root shell…</string>
+    <string name="home_wireless_step_dev_options_title">1. Bật gỡ lỗi không dây</string>
+    <string name="home_wireless_step_dev_options_desc">Kết nối Wi-Fi và bật Gỡ lỗi không dây trong Tùy chọn nhà phát triển.</string>
+    <string name="home_wireless_step_pairing_title">2. Ghép nối thiết bị (Chỉ một lần)</string>
+    <string name="home_wireless_step_pairing_desc">Ghép nối thiết bị bằng mã 6 chữ số trong thông báo.</string>
+    <string name="home_wireless_step_start_title">3. Bắt đầu Shizuku</string>
+    <string name="home_wireless_step_start_desc">Kết nối với dịch vụ gỡ lỗi không dây và khởi chạy máy chủ.</string>
+    <string name="home_wireless_port_active">Gỡ lỗi không dây sẵn sàng (Cổng: %d)</string>
+    <string name="home_wireless_open_dev_options">Tùy chọn nhà phát triển</string>
+    <string name="home_wireless_btn_pair">Ghép nối</string>
+    <string name="home_wireless_btn_start">Bắt đầu Shizuku</string>
 </resources>

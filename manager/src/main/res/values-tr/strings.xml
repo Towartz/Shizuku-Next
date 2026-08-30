@@ -143,4 +143,14 @@
     <string name="settings_language_system" translatable="false">Follow System</string>
     <string name="starting_on_wireless_adb" translatable="false">Starting service with wirelessADB…</string>
     <string name="starting_root_shell" translatable="false">Starting root shell…</string>
+    <string name="home_wireless_step_dev_options_title">1. Kablosuz Hata Ayıklamayı Etkinleştir</string>
+    <string name="home_wireless_step_dev_options_desc">Wi-Fi\'ye bağlanın ve Geliştirici seçeneklerinde Kablosuz hata ayıklamayı açın.</string>
+    <string name="home_wireless_step_pairing_title">2. Cihazı Eşle (Bir defaya mahsus)</string>
+    <string name="home_wireless_step_pairing_desc">Bildirimdeki 6 haneli kodu kullanarak cihazınızı eşleyin.</string>
+    <string name="home_wireless_step_start_title">3. Shizuku\'yu Başlat</string>
+    <string name="home_wireless_step_start_desc">Etkin Kablosuz hata ayıklama hizmetine bağlanın ve sunucuyu başlatın.</string>
+    <string name="home_wireless_port_active">Kablosuz Hata Ayıklama Hazır (Port: %d)</string>
+    <string name="home_wireless_open_dev_options">Geliştirici seçenekleri</string>
+    <string name="home_wireless_btn_pair">Cihazı Eşle</string>
+    <string name="home_wireless_btn_start">Shizuku\'yu Başlat</string>
 </resources>

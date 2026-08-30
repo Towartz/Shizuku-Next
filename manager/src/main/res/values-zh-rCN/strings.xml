@@ -233,4 +233,14 @@
     <string name="settings_keep_start_on_boot_wireless_summary">开机时自动启动无线 ADB 模式</string>
     <string name="settings_keep_start_on_boot">开机自动启动（Root）</string>
     <string name="settings_keep_start_on_boot_summary">开机时自动通过 Root 启动服务</string>
+    <string name="home_wireless_step_dev_options_title">1. 启用无线调试</string>
+    <string name="home_wireless_step_dev_options_desc">连接 Wi-Fi 并在开发者选项中开启无线调试。</string>
+    <string name="home_wireless_step_pairing_title">2. 配对设备（仅需一次）</string>
+    <string name="home_wireless_step_pairing_desc">通过通知栏输入 6 位配对码完成设备配对。</string>
+    <string name="home_wireless_step_start_title">3. 启动 Shizuku</string>
+    <string name="home_wireless_step_start_desc">连接到已启用的无线调试服务并启动后台服务。</string>
+    <string name="home_wireless_port_active">无线调试已就绪（端口：%d）</string>
+    <string name="home_wireless_open_dev_options">开发者选项</string>
+    <string name="home_wireless_btn_pair">配对设备</string>
+    <string name="home_wireless_btn_start">启动 Shizuku</string>
 </resources>

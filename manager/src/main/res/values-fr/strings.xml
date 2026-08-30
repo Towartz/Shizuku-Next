@@ -184,4 +184,14 @@
     <string name="settings_language_system" translatable="false">Follow System</string>
     <string name="starting_on_wireless_adb" translatable="false">Starting service with wirelessADB…</string>
     <string name="starting_root_shell" translatable="false">Starting root shell…</string>
+    <string name="home_wireless_step_dev_options_title">1. Activer le débogage sans fil</string>
+    <string name="home_wireless_step_dev_options_desc">Connectez-vous au Wi-Fi et activez le débogage sans fil dans les options pour les développeurs.</string>
+    <string name="home_wireless_step_pairing_title">2. Associer l\'appareil (une seule fois)</string>
+    <string name="home_wireless_step_pairing_desc">Associez votre appareil à l\'aide du code à 6 chiffres dans la notification.</string>
+    <string name="home_wireless_step_start_title">3. Démarrer Shizuku</string>
+    <string name="home_wireless_step_start_desc">Connectez-vous au service de débogage sans fil et lancez le serveur.</string>
+    <string name="home_wireless_port_active">Débogage sans fil prêt (Port : %d)</string>
+    <string name="home_wireless_open_dev_options">Options pour les développeurs</string>
+    <string name="home_wireless_btn_pair">Associer</string>
+    <string name="home_wireless_btn_start">Démarrer Shizuku</string>
 </resources>

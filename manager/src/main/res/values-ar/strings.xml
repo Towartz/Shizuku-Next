@@ -147,4 +147,14 @@
     <string name="settings_language_system" translatable="false">Follow System</string>
     <string name="starting_on_wireless_adb" translatable="false">Starting service with wirelessADB…</string>
     <string name="starting_root_shell" translatable="false">Starting root shell…</string>
+    <string name="home_wireless_step_dev_options_title">1. تمكين تصحيح الأخطاء اللاسلكي</string>
+    <string name="home_wireless_step_dev_options_desc">اتصل بشبكة Wi-Fi وقم بتمكين تصحيح الأخطاء اللاسلكي في خيارات المطور.</string>
+    <string name="home_wireless_step_pairing_title">2. إقران الجهاز (لمرة واحدة)</string>
+    <string name="home_wireless_step_pairing_desc">قم بإقران جهازك باستخدام الرمز المكون من 6 أرقام في الإشعار.</string>
+    <string name="home_wireless_step_start_title">3. تشغيل Shizuku</string>
+    <string name="home_wireless_step_start_desc">اتصل بخدمة تصحيح الأخطاء اللاسلكي النشطة وقم بتشغيل الخادم.</string>
+    <string name="home_wireless_port_active">تصحيح الأخطاء اللاسلكي جاهز (المنفذ: %d)</string>
+    <string name="home_wireless_open_dev_options">خيارات المطور</string>
+    <string name="home_wireless_btn_pair">إقران الجهاز</string>
+    <string name="home_wireless_btn_start">تشغيل Shizuku</string>
 </resources>

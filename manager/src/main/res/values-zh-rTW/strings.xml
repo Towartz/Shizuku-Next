@@ -237,4 +237,14 @@
     <string name="settings_keep_start_on_boot_wireless_summary">開機時自動啟動無線 ADB 模式</string>
     <string name="settings_keep_start_on_boot">開機自動啟動（Root）</string>
     <string name="settings_keep_start_on_boot_summary">開機時自動透過 Root 啟動服務</string>
+    <string name="home_wireless_step_dev_options_title">1. 啟用無線偵錯</string>
+    <string name="home_wireless_step_dev_options_desc">連接 Wi-Fi 並在開發人員選項中開啟無線偵錯。</string>
+    <string name="home_wireless_step_pairing_title">2. 配對裝置（僅需一次）</string>
+    <string name="home_wireless_step_pairing_desc">透過通知列輸入 6 位配對碼完成裝置配對。</string>
+    <string name="home_wireless_step_start_title">3. 啟動 Shizuku</string>
+    <string name="home_wireless_step_start_desc">連接至已啟用的無線偵錯服務並啟動背景服務。</string>
+    <string name="home_wireless_port_active">無線偵錯已就緒（連接埠：%d）</string>
+    <string name="home_wireless_open_dev_options">開發人員選項</string>
+    <string name="home_wireless_btn_pair">配對裝置</string>
+    <string name="home_wireless_btn_start">啟動 Shizuku</string>
 </resources>

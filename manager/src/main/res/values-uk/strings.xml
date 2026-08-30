@@ -144,4 +144,14 @@
     <string name="settings_language_system" translatable="false">Follow System</string>
     <string name="starting_on_wireless_adb" translatable="false">Starting service with wirelessADB…</string>
     <string name="starting_root_shell" translatable="false">Starting root shell…</string>
+    <string name="home_wireless_step_dev_options_title">1. Увімкніть бездротове налагодження</string>
+    <string name="home_wireless_step_dev_options_desc">Підключіться до Wi-Fi та увімкніть бездротове налагодження в параметрах розробника.</string>
+    <string name="home_wireless_step_pairing_title">2. З\'єднання з пристроєм (одноразово)</string>
+    <string name="home_wireless_step_pairing_desc">Введіть 6-значний код з\'єднання зі сповіщення.</string>
+    <string name="home_wireless_step_start_title">3. Запуск Shizuku</string>
+    <string name="home_wireless_step_start_desc">Підключіться до активної служби бездротового налагодження та запустіть сервер.</string>
+    <string name="home_wireless_port_active">Бездротове налагодження готове (порт: %d)</string>
+    <string name="home_wireless_open_dev_options">Параметри розробника</string>
+    <string name="home_wireless_btn_pair">З\'єднати</string>
+    <string name="home_wireless_btn_start">Запустити Shizuku</string>
 </resources>

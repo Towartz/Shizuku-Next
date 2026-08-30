@@ -199,4 +199,14 @@
     <string name="settings_language_system" translatable="false">Follow System</string>
     <string name="starting_on_wireless_adb" translatable="false">Starting service with wirelessADB…</string>
     <string name="starting_root_shell" translatable="false">Starting root shell…</string>
+    <string name="home_wireless_step_dev_options_title">1. Включите беспроводную отладку</string>
+    <string name="home_wireless_step_dev_options_desc">Подключитесь к Wi-Fi и включите беспроводную отладку в параметрах разработчика.</string>
+    <string name="home_wireless_step_pairing_title">2. Сопряжение устройства (один раз)</string>
+    <string name="home_wireless_step_pairing_desc">Введите 6-значный код сопряжения из уведомления.</string>
+    <string name="home_wireless_step_start_title">3. Запуск Shizuku</string>
+    <string name="home_wireless_step_start_desc">Подключитесь к службе беспроводной отладки и запустите сервер.</string>
+    <string name="home_wireless_port_active">Беспроводная отладка готова (порт: %d)</string>
+    <string name="home_wireless_open_dev_options">Параметры разработчика</string>
+    <string name="home_wireless_btn_pair">Сопряжение</string>
+    <string name="home_wireless_btn_start">Запустить Shizuku</string>
 </resources>

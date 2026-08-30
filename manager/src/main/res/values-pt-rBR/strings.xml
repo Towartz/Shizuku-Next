@@ -193,4 +193,14 @@
     <string name="settings_language_system" translatable="false">Follow System</string>
     <string name="starting_on_wireless_adb" translatable="false">Starting service with wirelessADB…</string>
     <string name="starting_root_shell" translatable="false">Starting root shell…</string>
+    <string name="home_wireless_step_dev_options_title">1. Ativar depuração sem fio</string>
+    <string name="home_wireless_step_dev_options_desc">Conecte-se ao Wi-Fi e ative a depuração sem fio nas opções do desenvolvedor.</string>
+    <string name="home_wireless_step_pairing_title">2. Parear dispositivo (apenas uma vez)</string>
+    <string name="home_wireless_step_pairing_desc">Pareie seu dispositivo usando o código de 6 dígitos na notificação.</string>
+    <string name="home_wireless_step_start_title">3. Iniciar Shizuku</string>
+    <string name="home_wireless_step_start_desc">Conecte-se ao serviço de depuração sem fio ativo e inicie o servidor.</string>
+    <string name="home_wireless_port_active">Depuração sem fio pronta (Porta: %d)</string>
+    <string name="home_wireless_open_dev_options">Opções do desenvolvedor</string>
+    <string name="home_wireless_btn_pair">Parear dispositivo</string>
+    <string name="home_wireless_btn_start">Iniciar Shizuku</string>
 </resources>
