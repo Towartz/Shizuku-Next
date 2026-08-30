@@ -58,9 +58,16 @@ object SettingsHelper {
             var success = false
             if (Shizuku.pingBinder()) {
                 try {
+                    val newProcessMethod = Shizuku::class.java.getDeclaredMethod(
+                        "newProcess",
+                        Array<String>::class.java,
+                        Array<String>::class.java,
+                        String::class.java
+                    ).apply { isAccessible = true }
+
                     for (cmd in cmds) {
-                        val proc = Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null)
-                        proc.waitFor()
+                        val proc = newProcessMethod.invoke(null, arrayOf("sh", "-c", cmd), null, null) as? Process
+                        proc?.waitFor()
                     }
                     success = isIgnoringBatteryOptimizations(context)
                 } catch (e: Throwable) {
