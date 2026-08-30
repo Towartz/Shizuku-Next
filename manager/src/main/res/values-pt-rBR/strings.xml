@@ -134,4 +134,56 @@
 \nNormalmente, essa limitação pode ser eliminada ajustando algumas opções nas “Opções do desenvolvedor”. Por favor, leia a ajuda para obter detalhes sobre como fazer isso.
 \n
 \nPode ser necessário reiniciar o Shizuku para que a operação tenha efeito.</string>
+    <string name="home_tab_root_recommended">Root (Recomendado)</string>
+    <string name="home_tab_wireless_recommended">Depuração sem fio (Recomendado)</string>
+    <string name="home_status_root_available">Acesso Root detectado</string>
+    <string name="home_wireless_step_1_title">Passo 1: Parear</string>
+    <string name="home_wireless_step_2_title">Passo 2: Iniciar serviço</string>
+    <string name="home_status_active">Em execução</string>
+    <string name="home_status_inactive">Inativo</string>
+    <string name="home_grid_docs">Documentação</string>
+    <string name="home_grid_docs_summary">Guias e tutoriais</string>
+    <string name="home_metric_authorized">Autorizados</string>
+    <string name="home_metric_terminal">Terminal</string>
+    <string name="home_metric_terminal_desc">Comandos via rish</string>
+    <string name="home_section_start_methods">Iniciar Shizuku Next</string>
+    <string name="home_tab_wireless">Sem fio</string>
+    <string name="home_tab_root">Via Root</string>
+    <string name="home_tab_computer">Via PC</string>
+    <string name="home_start_wireless_summary">Inicie diretamente no dispositivo sem precisar de um PC.</string>
+    <string name="home_start_root_summary">Inicie diretamente com privilégios de superusuário (Root).</string>
+    <string name="home_start_adb_summary">Conecte ao computador e execute o comando ADB.</string>
+    <string name="home_wireless_step_pairing">Parear</string>
+    <string name="home_wireless_step_start">Iniciar</string>
+    <string name="home_command_copied">Comando copiado para a área de transferência</string>
+    <string name="home_command_copy">Copiar comando</string>
+    <string name="hide_apps_title">Ocultar de apps</string>
+    <string name="hide_apps_count">%1$d apps ocultados</string>
+    <string name="hide_apps_search_hint">Pesquisar aplicativos…</string>
+    <string name="hide_apps_filter_all">Todos</string>
+    <string name="hide_apps_filter_hidden">Ocultos</string>
+    <string name="hide_apps_hide">Ocultar</string>
+    <string name="hide_apps_unhide">Exibir</string>
+    <string name="hide_apps_unhide_all">Exibir todos</string>
+    <string name="hide_apps_empty_title">Nenhum aplicativo encontrado</string>
+    <string name="hide_apps_empty_desc">Tente alterar os termos da busca</string>
+    <string name="hide_apps_hero_title">Ocultação de componentes</string>
+    <string name="hide_apps_hero_desc">Os aplicativos selecionados não detectarão o Shizuku.</string>
+    <string name="hide_apps_hero_button">Exibir todos</string>
+    <string name="hide_apps_badge_hidden">Oculto</string>
+    <string name="settings_hide_from_apps">Ocultar de apps</string>
+    <string name="settings_hide_from_apps_summary">Bloquear detecção do Shizuku por apps selecionados</string>
+    <string name="settings_battery_optimization">Otimização de bateria</string>
+    <string name="settings_battery_optimization_unrestricted">Irrestrito</string>
+    <string name="settings_battery_optimization_optimized">Otimizado</string>
+    <string name="settings_tcpip_port">Porta TCP/IP</string>
+    <string name="settings_tcpip_port_summary">Porta personalizada para ADB sem fio</string>
+    <string name="settings_tcpip_port_disabled">Desativado</string>
+    <string name="settings_use_system_color_summary">Seguir cores do Material You</string>
+    <string name="settings_watchdog_enabled_adb">Vigilante ADB</string>
+    <string name="settings_watchdog_enabled_adb_summary">Monitorar e reconectar automaticamente</string>
+    <string name="settings_keep_start_on_boot_wireless">Iniciar no boot (Sem fio)</string>
+    <string name="settings_keep_start_on_boot_wireless_summary">Iniciar automaticamente ao ligar</string>
+    <string name="settings_keep_start_on_boot">Iniciar no boot (Root)</string>
+    <string name="settings_keep_start_on_boot_summary">Iniciar automaticamente com Root</string>
 </resources>
