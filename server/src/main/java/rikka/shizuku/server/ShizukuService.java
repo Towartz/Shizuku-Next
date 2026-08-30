@@ -532,7 +532,11 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
 
     void sendBinderToClient() {
         for (int userId : UserManagerApis.getUserIdsNoThrow()) {
-            sendBinderToClient(this, userId);
+            try {
+                sendBinderToClient(this, userId);
+            } catch (Throwable tr) {
+                LOGGER.w(tr, "sendBinderToClient for user %d failed", userId);
+            }
         }
     }
 
@@ -547,7 +551,7 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
                 }
             }
         } catch (Throwable tr) {
-            LOGGER.e("exception when call getInstalledPackages", tr);
+            LOGGER.e("exception when call getInstalledPackages for user " + userId, tr);
         }
     }
 
@@ -557,7 +561,11 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
 
     private static void sendBinderToManger(Binder binder) {
         for (int userId : UserManagerApis.getUserIdsNoThrow()) {
-            sendBinderToManger(binder, userId);
+            try {
+                sendBinderToManger(binder, userId);
+            } catch (Throwable tr) {
+                LOGGER.w(tr, "sendBinderToManager for user %d failed", userId);
+            }
         }
     }
 
@@ -612,6 +620,13 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
             }
             if (!provider.asBinder().pingBinder()) {
                 LOGGER.e("provider is dead %s %d", name, userId);
+
+                try {
+                    ActivityManagerApis.removeContentProviderExternal(name, token);
+                    provider = null;
+                } catch (Throwable tr) {
+                    LOGGER.w(tr, "removeContentProviderExternal on dead provider");
+                }
 
                 if (retry) {
                     // For unknown reason, sometimes this could happens

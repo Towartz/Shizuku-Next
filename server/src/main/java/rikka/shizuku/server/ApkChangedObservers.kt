@@ -15,13 +15,17 @@ object ApkChangedObservers {
 
     @JvmStatic
     fun start(apkPath: String, listener: ApkChangedListener) {
-        // inotify watchs inode, if the there are still processes holds the file, DELTE_SELF will not be triggered
+        // inotify watches inode, if there are still processes holding the file, DELETE_SELF will not be triggered
         // so we need to watch the parent folder
+        val parent = File(apkPath).parent ?: return
 
-        val path = File(apkPath).parent!!
-        val observer = observers.getOrPut(path) {
-            ApkChangedObserver(path).apply {
-                startWatching()
+        val observer = observers.getOrPut(parent) {
+            ApkChangedObserver(parent).apply {
+                try {
+                    startWatching()
+                } catch (tr: Throwable) {
+                    Log.w("ShizukuServer", "Failed to start watching $parent", tr)
+                }
             }
         }
         observer.addListener(listener)
@@ -40,12 +44,16 @@ object ApkChangedObservers {
         }
 
         for (path in pathToRemove) {
-            observers.remove(path)?.stopWatching()
+            try {
+                observers.remove(path)?.stopWatching()
+            } catch (tr: Throwable) {
+                Log.w("ShizukuServer", "Failed to stop watching $path", tr)
+            }
         }
     }
 }
 
-class ApkChangedObserver(private val path: String) : FileObserver(path, DELETE) {
+class ApkChangedObserver(private val path: String) : FileObserver(path, DELETE or MOVED_FROM or DELETE_SELF) {
 
     private val listeners = mutableSetOf<ApkChangedListener>()
 
@@ -64,13 +72,26 @@ class ApkChangedObserver(private val path: String) : FileObserver(path, DELETE) 
     override fun onEvent(event: Int, path: String?) {
         Log.d("ShizukuServer", "onEvent: ${eventToString(event)} $path")
 
-        if ((event and 0x00008000 /* IN_IGNORED */) != 0 || path == null) {
+        if ((event and 0x00008000 /* IN_IGNORED */) != 0) {
             return
         }
 
-        if (path == "base.apk") {
-            stopWatching()
-            ArrayList(listeners).forEach { it.onApkChanged() }
+        val isApkEvent = path != null && (path.endsWith(".apk") || path == "base.apk")
+        val isDirDeleted = (event and (DELETE_SELF or MOVED_FROM)) != 0
+
+        if (isApkEvent || isDirDeleted) {
+            try {
+                stopWatching()
+            } catch (tr: Throwable) {
+                // ignore
+            }
+            ArrayList(listeners).forEach {
+                try {
+                    it.onApkChanged()
+                } catch (tr: Throwable) {
+                    Log.w("ShizukuServer", "Error invoking onApkChanged", tr)
+                }
+            }
         }
     }
 
