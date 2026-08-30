@@ -323,28 +323,26 @@ private fun HomeScreenContent(
                 }
             }
 
-            // 4. Start Shizuku Section (Segmented Row & Smart Recommendation)
+            // 4. Start Shizuku Section (Segmented Selector)
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    SectionHeader(title = stringResource(R.string.home_section_start_methods))
-                    if (isRoot) {
-                        Surface(
-                            shape = MaterialTheme.shapes.extraSmall,
-                            color = MaterialTheme.colorScheme.primaryContainer
-                        ) {
-                            Text(
-                                text = stringResource(R.string.home_status_root_available),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            )
+                SectionHeader(
+                    title = stringResource(R.string.home_section_start_methods),
+                    badge = if (isRoot) {
+                        {
+                            Surface(
+                                shape = MaterialTheme.shapes.extraSmall,
+                                color = MaterialTheme.colorScheme.primaryContainer
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.home_status_root_available),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                )
+                            }
                         }
-                    }
-                }
+                    } else null
+                )
             }
 
             item {
@@ -354,8 +352,6 @@ private fun HomeScreenContent(
                     val tabs = StartMethodTab.values()
                     tabs.forEachIndexed { index, tab ->
                         val isSelected = selectedTab == tab
-                        val isRecommended = (isRoot && tab == StartMethodTab.ROOT) ||
-                                (!isRoot && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && tab == StartMethodTab.WIRELESS)
 
                         SegmentedButton(
                             selected = isSelected,
@@ -375,10 +371,11 @@ private fun HomeScreenContent(
                         ) {
                             Text(
                                 text = when (tab) {
-                                    StartMethodTab.WIRELESS -> if (isRecommended) stringResource(R.string.home_tab_wireless_recommended) else stringResource(R.string.home_tab_wireless)
-                                    StartMethodTab.ROOT -> if (isRecommended) stringResource(R.string.home_tab_root_recommended) else stringResource(R.string.home_tab_root)
+                                    StartMethodTab.WIRELESS -> stringResource(R.string.home_tab_wireless)
+                                    StartMethodTab.ROOT -> stringResource(R.string.home_tab_root)
                                     StartMethodTab.COMPUTER -> stringResource(R.string.home_tab_computer)
                                 },
+                                style = MaterialTheme.typography.labelMedium,
                                 maxLines = 1
                             )
                         }
@@ -690,16 +687,27 @@ private fun QuickActionGridTile(
 }
 
 @Composable
-private fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 4.dp, top = 4.dp)
-    )
+private fun SectionHeader(
+    title: String,
+    modifier: Modifier = Modifier,
+    badge: @Composable (() -> Unit)? = null
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        badge?.invoke()
+    }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun WirelessAdbStartCard(
     onStart: () -> Unit,
@@ -718,21 +726,41 @@ private fun WirelessAdbStartCard(
         Column(modifier = Modifier.padding(20.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.Wifi,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(26.dp)
-                )
-                Spacer(modifier = Modifier.size(14.dp))
-                Text(
-                    text = stringResource(R.string.home_wireless_adb_title),
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f, fill = false)
+                ) {
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Outlined.Wifi,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column {
+                        Text(
+                            text = stringResource(R.string.home_tab_wireless),
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = stringResource(R.string.home_wireless_step_1_title),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
                 Surface(
                     shape = MaterialTheme.shapes.small,
                     color = if (currentPort > 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
@@ -741,36 +769,49 @@ private fun WirelessAdbStartCard(
                         text = if (currentPort > 0) "Port: $currentPort" else "Android 11+",
                         style = MaterialTheme.typography.labelSmall,
                         color = if (currentPort > 0) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(8.dp))
+
+            Spacer(modifier = Modifier.height(14.dp))
             Text(
                 text = stringResource(R.string.home_start_wireless_summary),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
             Spacer(modifier = Modifier.height(16.dp))
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                FilledTonalButton(onClick = onPair) {
+                FilledTonalButton(
+                    onClick = onPair,
+                    modifier = Modifier.weight(1f)
+                ) {
                     Icon(Icons.Outlined.Wifi, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.home_wireless_step_pairing))
+                    Text(stringResource(R.string.home_wireless_step_pairing), maxLines = 1)
                 }
-                Button(onClick = onStart) {
+                Button(
+                    onClick = onStart,
+                    modifier = Modifier.weight(1f)
+                ) {
                     Icon(Icons.Outlined.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.home_wireless_step_start))
+                    Text(stringResource(R.string.home_wireless_step_start), maxLines = 1)
                 }
-                OutlinedButton(onClick = onGuide) {
-                    Icon(Icons.Outlined.HelpOutline, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.home_wireless_adb_view_guide_button))
-                }
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            TextButton(
+                onClick = onGuide,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Icon(Icons.Outlined.HelpOutline, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(stringResource(R.string.home_wireless_adb_view_guide_button))
             }
         }
     }
@@ -791,21 +832,41 @@ private fun RootStartCard(
         Column(modifier = Modifier.padding(20.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.PlayArrow,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(26.dp)
-                )
-                Spacer(modifier = Modifier.size(14.dp))
-                Text(
-                    text = stringResource(R.string.home_root_title),
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f, fill = false)
+                ) {
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Outlined.PlayArrow,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column {
+                        Text(
+                            text = stringResource(R.string.home_tab_root),
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = stringResource(R.string.home_root_title),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
                 Surface(
                     shape = MaterialTheme.shapes.small,
                     color = MaterialTheme.colorScheme.primaryContainer
@@ -814,24 +875,29 @@ private fun RootStartCard(
                         text = "Root",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(8.dp))
+
+            Spacer(modifier = Modifier.height(14.dp))
             Text(
                 text = stringResource(R.string.home_start_root_summary),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = onStart) {
+            Button(
+                onClick = onStart,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Icon(
                     imageVector = if (isRestart) Icons.Outlined.Refresh else Icons.Outlined.PlayArrow,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     if (isRestart) stringResource(R.string.home_root_button_restart) else stringResource(R.string.home_root_button_start)
                 )
@@ -840,7 +906,6 @@ private fun RootStartCard(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ComputerAdbStartCard(
     onCopyCommand: () -> Unit,
@@ -857,21 +922,41 @@ private fun ComputerAdbStartCard(
         Column(modifier = Modifier.padding(20.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.Computer,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(26.dp)
-                )
-                Spacer(modifier = Modifier.size(14.dp))
-                Text(
-                    text = stringResource(R.string.home_adb_title),
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f, fill = false)
+                ) {
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Outlined.Computer,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column {
+                        Text(
+                            text = stringResource(R.string.home_tab_computer),
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = stringResource(R.string.home_adb_title),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
                 Surface(
                     shape = MaterialTheme.shapes.small,
                     color = MaterialTheme.colorScheme.secondaryContainer
@@ -880,19 +965,19 @@ private fun ComputerAdbStartCard(
                         text = "ADB",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(8.dp))
+
+            Spacer(modifier = Modifier.height(14.dp))
             Text(
                 text = stringResource(R.string.home_start_adb_summary),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.height(14.dp))
 
-            // Inline Code Snippet Box
+            Spacer(modifier = Modifier.height(14.dp))
             Surface(
                 shape = MaterialTheme.shapes.medium,
                 color = MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -917,17 +1002,23 @@ private fun ComputerAdbStartCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Button(onClick = onCopyCommand) {
+                Button(
+                    onClick = onCopyCommand,
+                    modifier = Modifier.weight(1f)
+                ) {
                     Icon(Icons.Outlined.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(stringResource(R.string.home_command_copy))
                 }
-                OutlinedButton(onClick = onViewCommandDialog) {
+                OutlinedButton(
+                    onClick = onViewCommandDialog,
+                    modifier = Modifier.weight(1f)
+                ) {
                     Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(stringResource(R.string.home_adb_button_view_command))
