@@ -6,6 +6,12 @@ import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.result.ActivityResultLauncher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import moe.shizuku.manager.utils.Logger.LOGGER
+import rikka.shizuku.Shizuku
 
 object SettingsHelper {
 
@@ -30,6 +36,54 @@ object SettingsHelper {
                     })
                 } catch (_: Exception) {
                 }
+            }
+        }
+    }
+
+    fun requestIgnoreBatteryOptimizationsPrivileged(
+        context: Context,
+        onComplete: ((Boolean) -> Unit)? = null
+    ) {
+        val pkg = context.packageName
+        val cmds = listOf(
+            "cmd deviceidle whitelist +$pkg",
+            "dumpsys deviceidle whitelist +$pkg",
+            "cmd appops set $pkg RUN_IN_BACKGROUND allow",
+            "cmd appops set $pkg RUN_ANY_IN_BACKGROUND allow",
+            "cmd appops set $pkg REQUEST_IGNORE_BATTERY_OPTIMIZATIONS allow",
+            "cmd appops set $pkg AUTO_START allow"
+        )
+
+        CoroutineScope(Dispatchers.IO).launch {
+            var success = false
+            if (Shizuku.pingBinder()) {
+                try {
+                    for (cmd in cmds) {
+                        val proc = Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null)
+                        proc.waitFor()
+                    }
+                    success = isIgnoringBatteryOptimizations(context)
+                } catch (e: Throwable) {
+                    LOGGER.w("requestIgnoreBatteryOptimizationsPrivileged via Shizuku failed", e)
+                }
+            }
+
+            if (!success && com.topjohnwu.superuser.Shell.isAppGrantedRoot() == true) {
+                try {
+                    for (cmd in cmds) {
+                        com.topjohnwu.superuser.Shell.cmd(cmd).exec()
+                    }
+                    success = isIgnoringBatteryOptimizations(context)
+                } catch (e: Throwable) {
+                    LOGGER.w("requestIgnoreBatteryOptimizationsPrivileged via root failed", e)
+                }
+            }
+
+            withContext(Dispatchers.Main) {
+                if (!success) {
+                    requestIgnoreBatteryOptimizations(context)
+                }
+                onComplete?.invoke(success)
             }
         }
     }

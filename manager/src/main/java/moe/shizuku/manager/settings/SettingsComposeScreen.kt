@@ -232,8 +232,16 @@ private fun SettingsScreenContent(
                                 }
 
                                 "battery_optimization" -> {
-                                    moe.shizuku.manager.utils.SettingsHelper.requestIgnoreBatteryOptimizations(context)
-                                    recreateAfterAnimation()
+                                    moe.shizuku.manager.utils.SettingsHelper.requestIgnoreBatteryOptimizationsPrivileged(context) { success ->
+                                        if (success) {
+                                            android.widget.Toast.makeText(
+                                                context,
+                                                context.getString(R.string.settings_battery_optimization_unrestricted),
+                                                android.widget.Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                        recreateAfterAnimation()
+                                    }
                                 }
 
                                 ShizukuSettings.HIDDEN_APPS_SET -> {

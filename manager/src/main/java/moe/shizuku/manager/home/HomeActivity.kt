@@ -45,6 +45,9 @@ abstract class HomeActivity : AppActivity() {
     private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
         checkServerStatus()
         appsModel.load()
+        if (!moe.shizuku.manager.utils.SettingsHelper.isIgnoringBatteryOptimizations(this)) {
+            moe.shizuku.manager.utils.SettingsHelper.requestIgnoreBatteryOptimizationsPrivileged(this)
+        }
     }
 
     private val binderDeadListener = Shizuku.OnBinderDeadListener {
@@ -139,6 +142,9 @@ abstract class HomeActivity : AppActivity() {
         super.onResume()
         checkServerStatus()
         appsModel.load()
+        if (Shizuku.pingBinder() && !moe.shizuku.manager.utils.SettingsHelper.isIgnoringBatteryOptimizations(this)) {
+            moe.shizuku.manager.utils.SettingsHelper.requestIgnoreBatteryOptimizationsPrivileged(this)
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
