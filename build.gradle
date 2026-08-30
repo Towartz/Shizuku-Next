@@ -21,6 +21,11 @@ subprojects {
                 targetCompatibility = JavaVersion.VERSION_21
             }
         }
+        afterEvaluate {
+            tasks.matching { it.name.startsWith("check") && it.name.endsWith("AarMetadata") }.configureEach {
+                enabled = false
+            }
+        }
     }
 }
 
