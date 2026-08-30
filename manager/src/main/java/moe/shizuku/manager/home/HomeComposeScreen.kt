@@ -109,7 +109,8 @@ fun HomeComposeScreen(
     onCopyAdbCommand: () -> Unit,
     onSendAdbCommand: () -> Unit,
     onOpenAdbPermissionHelp: () -> Unit,
-    onOpenLearnMore: () -> Unit
+    onOpenLearnMore: () -> Unit,
+    onOpenDevelopmentSettings: () -> Unit = {}
 ) {
     ShizukuComposeTheme {
         HomeScreenContent(
@@ -128,7 +129,8 @@ fun HomeComposeScreen(
             onCopyAdbCommand = onCopyAdbCommand,
             onSendAdbCommand = onSendAdbCommand,
             onOpenAdbPermissionHelp = onOpenAdbPermissionHelp,
-            onOpenLearnMore = onOpenLearnMore
+            onOpenLearnMore = onOpenLearnMore,
+            onOpenDevelopmentSettings = onOpenDevelopmentSettings
         )
     }
 }
@@ -157,7 +159,8 @@ private fun HomeScreenContent(
     onCopyAdbCommand: () -> Unit,
     onSendAdbCommand: () -> Unit,
     onOpenAdbPermissionHelp: () -> Unit,
-    onOpenLearnMore: () -> Unit
+    onOpenLearnMore: () -> Unit,
+    onOpenDevelopmentSettings: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var menuExpanded by remember { mutableStateOf(false) }
@@ -394,6 +397,7 @@ private fun HomeScreenContent(
                             WirelessAdbStartCard(
                                 onStart = onStartWirelessAdb,
                                 onPair = onPairWireless,
+                                onOpenDevSettings = onOpenDevelopmentSettings,
                                 onGuide = onOpenWirelessGuide
                             )
                         }
@@ -712,9 +716,11 @@ private fun SectionHeader(
 private fun WirelessAdbStartCard(
     onStart: () -> Unit,
     onPair: () -> Unit,
+    onOpenDevSettings: () -> Unit,
     onGuide: () -> Unit
 ) {
     val currentPort = remember { EnvironmentUtils.getAdbTcpPort() }
+    val isPortActive = currentPort in 1..65535
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -755,56 +761,103 @@ private fun WirelessAdbStartCard(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = stringResource(R.string.home_wireless_step_1_title),
+                            text = if (isPortActive) {
+                                stringResource(R.string.home_wireless_port_active, currentPort)
+                            } else {
+                                stringResource(R.string.home_start_wireless_summary)
+                            },
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (isPortActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
                 Surface(
                     shape = MaterialTheme.shapes.small,
-                    color = if (currentPort > 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
+                    color = if (isPortActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
                 ) {
                     Text(
-                        text = if (currentPort > 0) "Port: $currentPort" else "Android 11+",
+                        text = if (isPortActive) "Port: $currentPort" else "Android 11+",
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (currentPort > 0) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
+                        color = if (isPortActive) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
-            Text(
-                text = stringResource(R.string.home_start_wireless_summary),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Step 1: Developer Options
+            WirelessStepItem(
+                icon = Icons.Outlined.Settings,
+                title = stringResource(R.string.home_wireless_step_dev_options_title),
+                description = stringResource(R.string.home_wireless_step_dev_options_desc),
+                actionButton = {
+                    OutlinedButton(
+                        onClick = onOpenDevSettings,
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(stringResource(R.string.home_wireless_open_dev_options), style = MaterialTheme.typography.labelMedium)
+                    }
+                }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                FilledTonalButton(
-                    onClick = onPair,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Outlined.Wifi, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.home_wireless_step_pairing), maxLines = 1)
+            Spacer(modifier = Modifier.height(10.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Step 2: Pairing
+            WirelessStepItem(
+                icon = Icons.Outlined.Wifi,
+                title = stringResource(R.string.home_wireless_step_pairing_title),
+                description = stringResource(R.string.home_wireless_step_pairing_desc),
+                actionButton = {
+                    FilledTonalButton(
+                        onClick = onPair,
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Wifi,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(stringResource(R.string.home_wireless_btn_pair), style = MaterialTheme.typography.labelMedium)
+                    }
                 }
-                Button(
-                    onClick = onStart,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Outlined.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.home_wireless_step_start), maxLines = 1)
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Step 3: Start Service
+            WirelessStepItem(
+                icon = Icons.Outlined.PlayArrow,
+                title = stringResource(R.string.home_wireless_step_start_title),
+                description = stringResource(R.string.home_wireless_step_start_desc),
+                actionButton = {
+                    Button(
+                        onClick = onStart,
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.PlayArrow,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(stringResource(R.string.home_wireless_btn_start), style = MaterialTheme.typography.labelMedium)
+                    }
                 }
-            }
-            Spacer(modifier = Modifier.height(4.dp))
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
             TextButton(
                 onClick = onGuide,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -814,6 +867,50 @@ private fun WirelessAdbStartCard(
                 Text(stringResource(R.string.home_wireless_adb_view_guide_button))
             }
         }
+    }
+}
+
+@Composable
+private fun WirelessStepItem(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    actionButton: @Composable () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Surface(
+            shape = MaterialTheme.shapes.small,
+            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
+            modifier = Modifier.size(32.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        actionButton()
     }
 }
 

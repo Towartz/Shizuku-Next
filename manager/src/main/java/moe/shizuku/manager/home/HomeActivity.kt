@@ -130,7 +130,8 @@ abstract class HomeActivity : AppActivity() {
                 },
                 onOpenLearnMore = {
                     CustomTabsHelper.launchUrlOrCopy(this, Helps.HOME.get())
-                }
+                },
+                onOpenDevelopmentSettings = { openDevelopmentSettings() }
             )
         }
 
