@@ -221,22 +221,25 @@ private class ViewModel(
         sb.append("Starting with wireless adb in port $port...").append('\n').append('\n')
         postResult()
 
-        if (Shizuku.pingBinder()) {
-            try {
-                Shizuku.exit()
-            } catch (tr: Throwable) {
-                // ignore
+        viewModelScope.launch(Dispatchers.IO) {
+            if (Shizuku.pingBinder()) {
+                try {
+                    Shizuku.exit()
+                    kotlinx.coroutines.delay(200)
+                } catch (tr: Throwable) {
+                    // ignore
+                }
             }
-        }
 
-        adbWirelessHelper.startShizukuViaAdb(
-            host = host,
-            port = port,
-            coroutineScope = viewModelScope,
-            onOutput = { outputString ->
-                sb.append(outputString)
-                postResult()
-            },
-            onError = { e -> postResult(e) })
+            adbWirelessHelper.startShizukuViaAdb(
+                host = host,
+                port = port,
+                coroutineScope = viewModelScope,
+                onOutput = { outputString ->
+                    sb.append(outputString)
+                    postResult()
+                },
+                onError = { e -> postResult(e) })
+        }
     }
 }

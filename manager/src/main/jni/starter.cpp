@@ -243,7 +243,8 @@ int main(int argc, char *argv[]) {
     printf("info: killing old process...\n");
     fflush(stdout);
 
-    foreach_proc([](pid_t pid) {
+    int killed_count = 0;
+    foreach_proc([&killed_count](pid_t pid) {
         if (pid == getpid()) return;
 
         if (!is_shizuku_server(pid, s_target_process_name))
@@ -251,6 +252,7 @@ int main(int argc, char *argv[]) {
 
         if (kill(pid, SIGKILL) == 0) {
             printf("info: killed %d (%s)\n", pid, s_target_process_name);
+            killed_count++;
         } else if (errno == EPERM) {
             perrorf("fatal: can't kill %d, please try to stop existing Shizuku from app first.\n", pid);
             exit(EXIT_FATAL_KILL);
@@ -258,6 +260,13 @@ int main(int argc, char *argv[]) {
             printf("warn: failed to kill %d\n", pid);
         }
     });
+
+    if (killed_count == 0) {
+        printf("info: no existing server process found\n");
+    } else {
+        printf("info: cleanly killed %d existing process(es)\n", killed_count);
+    }
+    fflush(stdout);
 
     // Brief yield to allow OS to reclaim process table and binder descriptors
     usleep(50000);
