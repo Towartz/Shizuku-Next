@@ -59,3 +59,14 @@
 -repackageclasses rikka.shizuku
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
+
+# Optimize Kotlin Coroutines dispatchers and flow internals
+-dontwarn kotlinx.coroutines.**
+-keepclassmembernames class kotlinx.coroutines.** {
+    volatile <fields>;
+}
+
+# Material 3 & Jetpack Compose runtime optimizer
+-keepclassmembers class androidx.compose.runtime.RecomposeScopeImpl {
+    *;
+}

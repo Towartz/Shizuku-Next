@@ -23,7 +23,9 @@ fun ComponentActivity.appsViewModel() = sharedViewModels { AppsViewModel(this) }
 @MainThread
 fun Fragment.appsViewModel() = activitySharedViewModels { AppsViewModel(requireContext()) }
 
-class AppsViewModel(private val context: Context) : ViewModel() {
+class AppsViewModel(context: Context) : ViewModel() {
+
+    private val context = context.applicationContext
 
     private val _packages = MutableLiveData<Resource<List<PackageInfo>>>()
     val packages = _packages as LiveData<Resource<List<PackageInfo>>>

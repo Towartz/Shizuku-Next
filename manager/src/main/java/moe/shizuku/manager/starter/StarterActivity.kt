@@ -132,7 +132,7 @@ class StarterActivity : AppBarActivity() {
         }
 
         window?.decorView?.postDelayed({
-            if (!isFinishing) finish()
+            if (!isFinishing && !isDestroyed) finish()
         }, 3000)
     }
 
@@ -144,6 +144,7 @@ private class ViewModel(
     host: String?,
     port: Int
 ) : androidx.lifecycle.ViewModel() {
+    private val appContext = context.applicationContext
     private val sb = StringBuilder()
     private val _output = MutableLiveData<Resource<StringBuilder>>()
     private val adbWirelessHelper = AdbWirelessHelper()
@@ -151,7 +152,6 @@ private class ViewModel(
     val output = _output as LiveData<Resource<StringBuilder>>
 
     init {
-        context.applicationContext
         try {
             if (root) {
                 startRoot()
@@ -180,7 +180,7 @@ private class ViewModel(
         sb.append("Starting with root...").append('\n').append('\n')
         postResult()
 
-        GlobalScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             if (Shizuku.pingBinder()) {
                 try {
                     Shizuku.exit()
