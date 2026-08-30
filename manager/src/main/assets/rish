@@ -7,19 +7,34 @@ if [ ! -f "$DEX" ]; then
   exit 1
 fi
 
-if [ $(getprop ro.build.version.sdk) -ge 34 ]; then
-  if [ -w $DEX ]; then
-    echo "On Android 14+, app_process cannot load writable dex."
-    echo "Attempting to remove the write permission..."
-    chmod 400 $DEX
+SDK_VER=$(getprop ro.build.version.sdk 2>/dev/null)
+SDK_VER=${SDK_VER:-0}
+
+if [ "$SDK_VER" -ge 34 ]; then
+  if [ -w "$DEX" ]; then
+    chmod 400 "$DEX" 2>/dev/null
   fi
-  if [ -w $DEX ]; then
+  if [ -w "$DEX" ]; then
+    echo "On Android 14+, app_process cannot load writable dex."
     echo "Cannot remove the write permission of $DEX."
-    echo "You can copy to file to terminal app's private directory (/data/data/<package>, so that remove write permission is possible"
+    echo "You can copy the file to your terminal app's private directory (/data/data/<package>), so that removing write permission is possible."
     exit 1
   fi
 fi
 
-# Replace "PKG" with the application id of your terminal app
-[ -z "$RISH_APPLICATION_ID" ] && export RISH_APPLICATION_ID="PKG"
+# Auto-detect terminal application ID if not explicitly overridden
+if [ -z "$RISH_APPLICATION_ID" ] || [ "$RISH_APPLICATION_ID" = "PKG" ]; then
+  if [ -n "$TERMUX_VERSION" ] || [ -d "$PREFIX" ] || echo "$PWD" | grep -q "com.termux"; then
+    export RISH_APPLICATION_ID="com.termux"
+  elif echo "$PWD" | grep -q "bin.mt.plus"; then
+    export RISH_APPLICATION_ID="bin.mt.plus"
+  elif echo "$PWD" | grep -q "io.neoterm"; then
+    export RISH_APPLICATION_ID="io.neoterm"
+  elif echo "$PWD" | grep -qE '^/data/(user/[0-9]+/|data/)[^/]+'; then
+    export RISH_APPLICATION_ID=$(echo "$PWD" | sed -E 's|^/data/(user/[0-9]+/|data/)([^/]+).*|\2|')
+  else
+    export RISH_APPLICATION_ID="PKG"
+  fi
+fi
+
 /system/bin/app_process -Djava.class.path="$DEX" /system/bin --nice-name=rish rikka.shizuku.shell.ShizukuShellLoader "$@"

@@ -11,13 +11,18 @@ import rikka.shizuku.ShizukuApiConstants;
 
 public class Shell extends Rish {
 
+    private final String packageName;
+
+    public Shell(String packageName) {
+        this.packageName = packageName;
+    }
+
     @Override
     public void requestPermission(Runnable onGrantedRunnable) {
         if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
             onGrantedRunnable.run();
         } else if (Shizuku.shouldShowRequestPermissionRationale()) {
-            System.err.println("Permission denied");
-            System.err.flush();
+            printPermissionDeniedHelp();
             System.exit(1);
         } else {
             Shizuku.addRequestPermissionResultListener(new Shizuku.OnRequestPermissionResultListener() {
@@ -28,14 +33,19 @@ public class Shell extends Rish {
                     if (grantResult == PackageManager.PERMISSION_GRANTED) {
                         onGrantedRunnable.run();
                     } else {
-                        System.err.println("Permission denied");
-                        System.err.flush();
+                        printPermissionDeniedHelp();
                         System.exit(1);
                     }
                 }
             });
             Shizuku.requestPermission(0);
         }
+    }
+
+    private void printPermissionDeniedHelp() {
+        System.err.println("[!] Shizuku permission denied for " + (packageName != null ? packageName : "this app") + ".");
+        System.err.println("[!] Please open the Shizuku app -> 'Authorized Apps' and enable permission for this terminal.");
+        System.err.flush();
     }
 
     public static void main(String[] args, String packageName, IBinder binder, Handler handler) {
@@ -48,7 +58,7 @@ public class Shell extends Rish {
                 System.err.flush();
                 System.exit(1);
             }
-            new Shell().start(args);
+            new Shell(packageName).start(args);
         });
     }
 }
