@@ -440,7 +440,7 @@ private fun HomeScreenContent(
                         Text(text = versionName)
                         LinkRow(
                             label = context.getString(R.string.about_view_source_code, "GitHub"),
-                            url = "https://github.com/Towartz/Shizuku-mod"
+                            url = "https://github.com/Towartz/Shizuku-Next"
                         )
                         LinkRow(
                             label = context.getString(R.string.about_follow_channel, "t.me/np_nbcn"),

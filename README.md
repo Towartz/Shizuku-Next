@@ -1,4 +1,4 @@
-# Shizuku (Fork)
+# Shizuku-Next
 
 [中文版](./README.zh.md)
 
