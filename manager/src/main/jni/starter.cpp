@@ -175,6 +175,10 @@ static int switch_cgroup() {
         printf("info: switch cgroup succeeded, cgroup in /sys/fs/cgroup\n");
         return 0;
     }
+    if (cgroup::switch_cgroup("/dev/cpuset", pid)) {
+        printf("info: switch cgroup succeeded, cgroup in /dev/cpuset\n");
+        return 0;
+    }
     char buf[PROP_VALUE_MAX + 1];
     if (__system_property_get("ro.config.per_app_memcg", buf) > 0 &&
         strncmp(buf, "false", 5) != 0) {
@@ -230,14 +234,24 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FATAL_BINDER_BLOCKED_BY_SELINUX);
     }
 
-    check_selinux("u:r:untrusted_app:s0", "u:r:shell:s0", "binder", "call");
-    check_selinux("u:r:untrusted_app:s0", "u:r:shell:s0", "binder", "transfer");
-    check_selinux("u:r:untrusted_app_25:s0", "u:r:shell:s0", "binder", "call");
-    check_selinux("u:r:untrusted_app_25:s0", "u:r:shell:s0", "binder", "transfer");
-    check_selinux("u:r:untrusted_app_27:s0", "u:r:shell:s0", "binder", "call");
-    check_selinux("u:r:untrusted_app_27:s0", "u:r:shell:s0", "binder", "transfer");
-    check_selinux("u:r:untrusted_app_29:s0", "u:r:shell:s0", "binder", "call");
-    check_selinux("u:r:untrusted_app_29:s0", "u:r:shell:s0", "binder", "transfer");
+    const char *untrusted_domains[] = {
+        "u:r:untrusted_app:s0",
+        "u:r:untrusted_app_25:s0",
+        "u:r:untrusted_app_27:s0",
+        "u:r:untrusted_app_29:s0",
+        "u:r:untrusted_app_30:s0",
+        "u:r:untrusted_app_32:s0",
+        "u:r:untrusted_app_33:s0",
+        "u:r:untrusted_app_34:s0",
+        "u:r:untrusted_app_35:s0",
+        "u:r:untrusted_app_36:s0",
+        "u:r:untrusted_app_37:s0",
+    };
+
+    for (const auto *domain : untrusted_domains) {
+        check_selinux(domain, "u:r:shell:s0", "binder", "call");
+        check_selinux(domain, "u:r:shell:s0", "binder", "transfer");
+    }
 
     printf("info: starter begin\n");
     fflush(stdout);

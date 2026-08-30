@@ -3,10 +3,12 @@
 #include <cstring>
 #include <cstdlib>
 #include <cinttypes>
+#include <vector>
 #include <sys/system_properties.h>
 #include <openssl/curve25519.h>
 #include <openssl/hkdf.h>
 #include <openssl/evp.h>
+#include <openssl/mem.h>
 #include "adb_pairing.h"
 
 #define LOG_TAG "AdbPairClient"
@@ -34,6 +36,11 @@ struct PairingContextNative {
 };
 
 static jlong PairingContext_Constructor(JNIEnv *env, jclass clazz, jboolean isClient, jbyteArray jPassword) {
+    if (jPassword == nullptr) {
+        LOGE("Password byte array is null.");
+        return 0;
+    }
+
     spake2_role_t spake_role;
     const uint8_t *my_name;
     const uint8_t *their_name;
@@ -62,6 +69,11 @@ static jlong PairingContext_Constructor(JNIEnv *env, jclass clazz, jboolean isCl
 
     auto pswd_size = env->GetArrayLength(jPassword);
     auto pswd = env->GetByteArrayElements(jPassword, nullptr);
+    if (pswd == nullptr) {
+        LOGE("Failed to get password byte elements.");
+        SPAKE2_CTX_free(spake2_ctx);
+        return 0;
+    }
 
     size_t key_size = 0;
     uint8_t key[SPAKE2_MAX_MSG_SIZE];
@@ -76,6 +88,11 @@ static jlong PairingContext_Constructor(JNIEnv *env, jclass clazz, jboolean isCl
     env->ReleaseByteArrayElements(jPassword, pswd, 0);
 
     auto ctx = (PairingContextNative *) malloc(sizeof(PairingContextNative));
+    if (ctx == nullptr) {
+        LOGE("Out of memory allocating PairingContextNative.");
+        SPAKE2_CTX_free(spake2_ctx);
+        return 0;
+    }
     memset(ctx, 0, sizeof(PairingContextNative));
     ctx->spake2_ctx = spake2_ctx;
     memcpy(ctx->key, key, SPAKE2_MAX_MSG_SIZE);
@@ -84,25 +101,30 @@ static jlong PairingContext_Constructor(JNIEnv *env, jclass clazz, jboolean isCl
 }
 
 static jbyteArray PairingContext_Msg(JNIEnv *env, jobject obj, jlong ptr) {
+    if (ptr == 0) return nullptr;
     auto ctx = (PairingContextNative *) ptr;
     jbyteArray our_msg = env->NewByteArray(ctx->key_size);
-    env->SetByteArrayRegion(our_msg, 0, ctx->key_size, (jbyte *) ctx->key);
+    if (our_msg != nullptr) {
+        env->SetByteArrayRegion(our_msg, 0, ctx->key_size, (jbyte *) ctx->key);
+    }
     return our_msg;
 }
 
 static jboolean PairingContext_InitCipher(JNIEnv *env, jobject obj, jlong ptr, jbyteArray jTheirMsg) {
-    auto res = JNI_TRUE;
+    if (ptr == 0 || jTheirMsg == nullptr) return JNI_FALSE;
 
     auto ctx = (PairingContextNative *) ptr;
     auto spake2_ctx = ctx->spake2_ctx;
-    auto their_msg_size = env->GetArrayLength(jTheirMsg);
+    if (spake2_ctx == nullptr) return JNI_FALSE;
 
+    auto their_msg_size = env->GetArrayLength(jTheirMsg);
     if (their_msg_size > SPAKE2_MAX_MSG_SIZE) {
         LOGE("their_msg size [%d] greater then max size [%d].", their_msg_size, SPAKE2_MAX_MSG_SIZE);
         return JNI_FALSE;
     }
 
     auto their_msg = env->GetByteArrayElements(jTheirMsg, nullptr);
+    if (their_msg == nullptr) return JNI_FALSE;
 
     size_t key_material_len = 0;
     uint8_t key_material[SPAKE2_MAX_KEY_SIZE];
@@ -122,38 +144,43 @@ static jboolean PairingContext_InitCipher(JNIEnv *env, jobject obj, jlong ptr, j
 
     status = HKDF(key, sizeof(key), EVP_sha256(), key_material, key_material_len, nullptr, 0, info,
                   sizeof(info) - 1);
+    OPENSSL_cleanse(key_material, sizeof(key_material));
+
     if (status != 1) {
         LOGE("HKDF");
         return JNI_FALSE;
     }
 
     ctx->aes_ctx = EVP_AEAD_CTX_new(EVP_aead_aes_128_gcm(), key, sizeof(key), EVP_AEAD_DEFAULT_TAG_LENGTH);
+    OPENSSL_cleanse(key, sizeof(key));
 
     if (!ctx->aes_ctx) {
         LOGE("EVP_AEAD_CTX_new");
         return JNI_FALSE;
     }
 
-    return res;
+    return JNI_TRUE;
 }
 
 static jbyteArray PairingContext_Encrypt(JNIEnv *env, jobject obj, jlong ptr, jbyteArray jIn) {
+    if (ptr == 0 || jIn == nullptr) return nullptr;
     auto ctx = (PairingContextNative *) ptr;
     auto aes_ctx = ctx->aes_ctx;
+    if (aes_ctx == nullptr) return nullptr;
 
-    auto in = env->GetByteArrayElements(jIn, nullptr);
     auto in_size = env->GetArrayLength(jIn);
+    auto in = env->GetByteArrayElements(jIn, nullptr);
+    if (in == nullptr) return nullptr;
 
     auto out_size = (size_t) in_size + EVP_AEAD_max_overhead(EVP_AEAD_CTX_aead(ctx->aes_ctx));
-    uint8_t out[out_size];
+    std::vector<uint8_t> out(out_size);
 
     auto nonce_size = EVP_AEAD_nonce_length(EVP_AEAD_CTX_aead(aes_ctx));
-    uint8_t nonce[nonce_size];
-    memset(nonce, 0, nonce_size);
-    memcpy(nonce, &ctx->enc_sequence, sizeof(ctx->enc_sequence));
+    std::vector<uint8_t> nonce(nonce_size, 0);
+    memcpy(nonce.data(), &ctx->enc_sequence, sizeof(ctx->enc_sequence));
 
-    size_t written_sz;
-    int status = EVP_AEAD_CTX_seal(aes_ctx, out, &written_sz, out_size, nonce, nonce_size, (uint8_t *) in, in_size, nullptr, 0);
+    size_t written_sz = 0;
+    int status = EVP_AEAD_CTX_seal(aes_ctx, out.data(), &written_sz, out_size, nonce.data(), nonce_size, (uint8_t *) in, in_size, nullptr, 0);
 
     env->ReleaseByteArrayElements(jIn, in, 0);
 
@@ -164,27 +191,31 @@ static jbyteArray PairingContext_Encrypt(JNIEnv *env, jobject obj, jlong ptr, jb
     ++ctx->enc_sequence;
 
     jbyteArray jOut = env->NewByteArray(written_sz);
-    env->SetByteArrayRegion(jOut, 0, written_sz, (jbyte *) out);
+    if (jOut != nullptr) {
+        env->SetByteArrayRegion(jOut, 0, written_sz, (jbyte *) out.data());
+    }
     return jOut;
 }
 
 static jbyteArray PairingContext_Decrypt(JNIEnv *env, jobject obj, jlong ptr, jbyteArray jIn) {
+    if (ptr == 0 || jIn == nullptr) return nullptr;
     auto ctx = (PairingContextNative *) ptr;
     auto aes_ctx = ctx->aes_ctx;
+    if (aes_ctx == nullptr) return nullptr;
 
-    auto in = env->GetByteArrayElements(jIn, nullptr);
     auto in_size = env->GetArrayLength(jIn);
+    auto in = env->GetByteArrayElements(jIn, nullptr);
+    if (in == nullptr) return nullptr;
 
     auto out_size = (size_t) in_size;
-    uint8_t out[out_size];
+    std::vector<uint8_t> out(out_size);
 
     auto nonce_size = EVP_AEAD_nonce_length(EVP_AEAD_CTX_aead(aes_ctx));
-    uint8_t nonce[nonce_size];
-    memset(nonce, 0, nonce_size);
-    memcpy(nonce, &ctx->dec_sequence, sizeof(ctx->dec_sequence));
+    std::vector<uint8_t> nonce(nonce_size, 0);
+    memcpy(nonce.data(), &ctx->dec_sequence, sizeof(ctx->dec_sequence));
 
-    size_t written_sz;
-    int status = EVP_AEAD_CTX_open(aes_ctx, out, &written_sz, out_size, nonce, nonce_size, (uint8_t *) in, in_size, nullptr, 0);
+    size_t written_sz = 0;
+    int status = EVP_AEAD_CTX_open(aes_ctx, out.data(), &written_sz, out_size, nonce.data(), nonce_size, (uint8_t *) in, in_size, nullptr, 0);
 
     env->ReleaseByteArrayElements(jIn, in, 0);
 
@@ -195,14 +226,18 @@ static jbyteArray PairingContext_Decrypt(JNIEnv *env, jobject obj, jlong ptr, jb
     ++ctx->dec_sequence;
 
     jbyteArray jOut = env->NewByteArray(written_sz);
-    env->SetByteArrayRegion(jOut, 0, written_sz, (jbyte *) out);
+    if (jOut != nullptr) {
+        env->SetByteArrayRegion(jOut, 0, written_sz, (jbyte *) out.data());
+    }
     return jOut;
 }
 
 static void PairingContext_Destroy(JNIEnv *env, jobject obj, jlong ptr) {
+    if (ptr == 0) return;
     auto ctx = (PairingContextNative *) ptr;
-    SPAKE2_CTX_free(ctx->spake2_ctx);
+    if (ctx->spake2_ctx) SPAKE2_CTX_free(ctx->spake2_ctx);
     if (ctx->aes_ctx) EVP_AEAD_CTX_free(ctx->aes_ctx);
+    OPENSSL_cleanse(ctx->key, sizeof(ctx->key));
     free(ctx);
 }
 
@@ -214,6 +249,10 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
     if (vm->GetEnv((void **) &env, JNI_VERSION_1_6) != JNI_OK)
         return -1;
 
+    jclass clazz = env->FindClass("moe/shizuku/manager/adb/PairingContext");
+    if (clazz == nullptr)
+        return -1;
+
     JNINativeMethod methods_PairingContext[] = {
             {"nativeConstructor", "(Z[B)J",  (void *) PairingContext_Constructor},
             {"nativeMsg",         "(J)[B",   (void *) PairingContext_Msg},
@@ -223,8 +262,10 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
             {"nativeDestroy",     "(J)V",    (void *) PairingContext_Destroy},
     };
 
-    env->RegisterNatives(env->FindClass("moe/shizuku/manager/adb/PairingContext"), methods_PairingContext,
-                         sizeof(methods_PairingContext) / sizeof(JNINativeMethod));
+    if (env->RegisterNatives(clazz, methods_PairingContext,
+                             sizeof(methods_PairingContext) / sizeof(JNINativeMethod)) < 0) {
+        return -1;
+    }
 
     return JNI_VERSION_1_6;
 }

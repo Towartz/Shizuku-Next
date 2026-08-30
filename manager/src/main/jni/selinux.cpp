@@ -50,7 +50,7 @@ namespace se {
         errno_hold = errno;
         close(fd);
         errno = errno_hold;
-        return 0;
+        return ret;
     }
 
     static int __setcon(const char *ctx) {
@@ -60,7 +60,7 @@ namespace se {
         size_t len = strlen(ctx) + 1;
         ssize_t rc = write(fd, ctx, len);
         close(fd);
-        return rc != len;
+        return rc != (ssize_t) len;
     }
 
     static int __setfilecon(const char *path, const char *ctx) {
@@ -96,10 +96,19 @@ namespace se {
         if (handle == nullptr)
             return;
 
-        getcon = (getcon_t *) dlsym(handle, "getcon");
-        setcon = (setcon_t *) dlsym(handle, "setcon");
-        setfilecon = (setfilecon_t *) dlsym(handle, "setfilecon");
-        selinux_check_access = (selinux_check_access_t *) dlsym(handle, "selinux_check_access");
-        freecon = (freecon_t *) (dlsym(handle, "freecon"));
+        auto gc = (getcon_t *) dlsym(handle, "getcon");
+        if (gc) getcon = gc;
+
+        auto sc = (setcon_t *) dlsym(handle, "setcon");
+        if (sc) setcon = sc;
+
+        auto sfc = (setfilecon_t *) dlsym(handle, "setfilecon");
+        if (sfc) setfilecon = sfc;
+
+        auto sca = (selinux_check_access_t *) dlsym(handle, "selinux_check_access");
+        if (sca) selinux_check_access = sca;
+
+        auto fc = (freecon_t *) dlsym(handle, "freecon");
+        if (fc) freecon = fc;
     }
 }
