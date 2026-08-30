@@ -179,7 +179,7 @@ int switch_mnt_ns(int pid) {
     return res;
 }
 
-void foreach_proc(foreach_proc_function *func) {
+void foreach_proc(const foreach_proc_function &func) {
     DIR *dir;
     struct dirent *entry;
 
