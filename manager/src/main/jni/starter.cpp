@@ -57,65 +57,53 @@ static void run_server(const char *dex_path, const char *main_class, const char 
         exit(EXIT_FATAL_SET_CLASSPATH);
     }
 
-#define ARG(v) char **v = nullptr; \
-    char buf_##v[PATH_MAX]; \
-    size_t v_size = 0; \
-    uintptr_t v_current = 0;
-#define ARG_PUSH(v, arg) v_size += sizeof(char *); \
-if (v == nullptr) { \
-    v = (char **) malloc(v_size); \
-} else { \
-    v = (char **) realloc(v, v_size);\
-} \
-v_current = (uintptr_t) v + v_size - sizeof(char *); \
-*((char **) v_current) = arg ? strdup(arg) : nullptr;
-
-#define ARG_END(v) ARG_PUSH(v, nullptr)
-
-#define ARG_PUSH_FMT(v, fmt, ...) snprintf(buf_##v, PATH_MAX, fmt, __VA_ARGS__); \
-    ARG_PUSH(v, buf_##v)
-
-#ifdef JAVA_DEBUGGABLE
-#define ARG_PUSH_DEBUG_ONLY(v, arg) ARG_PUSH(v, arg)
-#define ARG_PUSH_DEBUG_VM_PARAMS(v) \
-    if (android_get_device_api_level() >= 30) { \
-        ARG_PUSH(v, "-Xcompiler-option"); \
-        ARG_PUSH(v, "--debuggable"); \
-        ARG_PUSH(v, "-XjdwpProvider:adbconnection"); \
-        ARG_PUSH(v, "-XjdwpOptions:suspend=n,server=y"); \
-    } else if (android_get_device_api_level() >= 28) { \
-        ARG_PUSH(v, "-Xcompiler-option"); \
-        ARG_PUSH(v, "--debuggable"); \
-        ARG_PUSH(v, "-XjdwpProvider:internal"); \
-        ARG_PUSH(v, "-XjdwpOptions:transport=dt_android_adb,suspend=n,server=y"); \
-    } else { \
-        ARG_PUSH(v, "-Xcompiler-option"); \
-        ARG_PUSH(v, "--debuggable"); \
-        ARG_PUSH(v, "-agentlib:jdwp=transport=dt_android_adb,suspend=n,server=y"); \
-    }
-#else
-#define ARG_PUSH_DEBUG_VM_PARAMS(v)
-#define ARG_PUSH_DEBUG_ONLY(v, arg)
-#endif
-
     char lib_path[PATH_MAX]{0};
     snprintf(lib_path, PATH_MAX, "%s/lib/%s", dirname(dex_path), ABI);
 
-    ARG(argv)
-    ARG_PUSH(argv, "/system/bin/app_process")
-    ARG_PUSH_FMT(argv, "-Djava.class.path=%s", dex_path)
-    ARG_PUSH_FMT(argv, "-Dshizuku.library.path=%s", lib_path)
-    ARG_PUSH_FMT(argv, "-Dshizuku.manager.package=%s", manager_package)
-    ARG_PUSH_DEBUG_VM_PARAMS(argv)
-    ARG_PUSH(argv, "/system/bin")
-    ARG_PUSH_FMT(argv, "--nice-name=%s", process_name)
-    ARG_PUSH(argv, main_class)
-    ARG_PUSH_DEBUG_ONLY(argv, "--debug")
-    ARG_END(argv)
+    std::vector<std::string> args;
+    args.reserve(16);
+
+    args.emplace_back("/system/bin/app_process");
+    args.emplace_back(std::string("-Djava.class.path=") + dex_path);
+    args.emplace_back(std::string("-Dshizuku.library.path=") + lib_path);
+    args.emplace_back(std::string("-Dshizuku.manager.package=") + manager_package);
+
+#ifdef JAVA_DEBUGGABLE
+    if (android_get_device_api_level() >= 30) {
+        args.emplace_back("-Xcompiler-option");
+        args.emplace_back("--debuggable");
+        args.emplace_back("-XjdwpProvider:adbconnection");
+        args.emplace_back("-XjdwpOptions:suspend=n,server=y");
+    } else if (android_get_device_api_level() >= 28) {
+        args.emplace_back("-Xcompiler-option");
+        args.emplace_back("--debuggable");
+        args.emplace_back("-XjdwpProvider:internal");
+        args.emplace_back("-XjdwpOptions:transport=dt_android_adb,suspend=n,server=y");
+    } else {
+        args.emplace_back("-Xcompiler-option");
+        args.emplace_back("--debuggable");
+        args.emplace_back("-agentlib:jdwp=transport=dt_android_adb,suspend=n,server=y");
+    }
+#endif
+
+    args.emplace_back("/system/bin");
+    args.emplace_back(std::string("--nice-name=") + process_name);
+    args.emplace_back(main_class);
+
+#ifdef JAVA_DEBUGGABLE
+    args.emplace_back("--debug");
+#endif
+
+    std::vector<char *> argv;
+    argv.reserve(args.size() + 1);
+    for (auto &arg : args) {
+        argv.push_back(const_cast<char *>(arg.c_str()));
+    }
+    argv.push_back(nullptr);
 
     LOGD("exec app_process");
 
-    if (execvp((const char *) argv[0], argv)) {
+    if (execvp(argv[0], argv.data())) {
         exit(EXIT_FATAL_APP_PROCESS);
     }
 }

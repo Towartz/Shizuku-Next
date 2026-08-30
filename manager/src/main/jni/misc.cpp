@@ -101,10 +101,12 @@ int is_shizuku_server(int pid, const char *target_name) {
 }
 
 int is_num(const char *s) {
-    size_t len = strlen(s);
-    for (size_t i = 0; i < len; ++i)
-        if (s[i] < '0' || s[i] > '9')
+    if (!s || !*s) return 0;
+    while (*s) {
+        if (*s < '0' || *s > '9')
             return 0;
+        s++;
+    }
     return 1;
 }
 
@@ -157,16 +159,11 @@ int copyfile(const char *src_path, const char *dst_path) {
 }
 
 uintptr_t memsearch(const uintptr_t start, const uintptr_t end, const void *value, size_t size) {
-    uintptr_t _start = start;
-    while (true) {
-        if (_start + size >= end)
-            return 0;
+    if (start >= end || size == 0 || (end - start) < size)
+        return 0;
 
-        if (memcmp((const void *) _start, value, size) == 0)
-            return _start;
-
-        _start += 1;
-    }
+    const void *found = memmem((const void *) start, end - start, value, size);
+    return found ? (uintptr_t) found : 0;
 }
 
 int switch_mnt_ns(int pid) {
@@ -200,38 +197,19 @@ void foreach_proc(foreach_proc_function *func) {
 }
 
 char *trim(char *str) {
-    size_t len = 0;
+    if (str == nullptr || *str == '\0') { return str; }
+
     char *frontp = str;
-    char *endp = nullptr;
-
-    if (str == nullptr) { return nullptr; }
-    if (str[0] == '\0') { return str; }
-
-    len = strlen(str);
-    endp = str + len;
-
-    /* Move the front and back pointers to address the first non-whitespace
-     * characters from each end.
-     */
     while (isspace((unsigned char) *frontp)) { ++frontp; }
-    if (endp != frontp) {
-        while (isspace((unsigned char) *(--endp)) && endp != frontp) {}
-    }
 
-    if (str + len - 1 != endp)
-        *(endp + 1) = '\0';
-    else if (frontp != str && endp == frontp)
-        *str = '\0';
+    char *endp = str + strlen(str) - 1;
+    while (endp >= frontp && isspace((unsigned char) *endp)) { --endp; }
 
-    /* Shift the string so that it starts at str so that if it's dynamically
-     * allocated, we can still free it on the returned pointer.  Note the reuse
-     * of endp to mean the front of the string buffer now.
-     */
-    endp = str;
-    if (frontp != str) {
-        while (*frontp) { *endp++ = *frontp++; }
-        *endp = '\0';
+    size_t new_len = endp >= frontp ? (size_t)(endp - frontp + 1) : 0;
+    if (frontp != str && new_len > 0) {
+        memmove(str, frontp, new_len);
     }
+    str[new_len] = '\0';
 
     return str;
 }
