@@ -249,21 +249,21 @@ int main(int argc, char *argv[]) {
     foreach_proc([](pid_t pid) {
         if (pid == getpid()) return;
 
-        char name[1024];
-        if (get_proc_name(pid, name, 1024) != 0) return;
-
-        if (strcmp(SERVER_NAME, name) != 0 && strcmp(s_target_process_name, name) != 0)
+        if (!is_shizuku_server(pid, s_target_process_name))
             return;
 
-        if (kill(pid, SIGKILL) == 0)
-            printf("info: killed %d (%s)\n", pid, name);
-        else if (errno == EPERM) {
+        if (kill(pid, SIGKILL) == 0) {
+            printf("info: killed %d (%s)\n", pid, s_target_process_name);
+        } else if (errno == EPERM) {
             perrorf("fatal: can't kill %d, please try to stop existing Shizuku from app first.\n", pid);
             exit(EXIT_FATAL_KILL);
         } else {
-            printf("warn: failed to kill %d (%s)\n", pid, name);
+            printf("warn: failed to kill %d\n", pid);
         }
     });
+
+    // Brief yield to allow OS to reclaim process table and binder descriptors
+    usleep(50000);
 
     if (access(apk_path.c_str(), R_OK) == 0) {
         printf("info: use apk path from argv\n");

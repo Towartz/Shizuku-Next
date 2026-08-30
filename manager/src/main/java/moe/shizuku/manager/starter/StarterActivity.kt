@@ -181,6 +181,15 @@ private class ViewModel(
         postResult()
 
         GlobalScope.launch(Dispatchers.IO) {
+            if (Shizuku.pingBinder()) {
+                try {
+                    Shizuku.exit()
+                    kotlinx.coroutines.delay(200)
+                } catch (tr: Throwable) {
+                    // ignore
+                }
+            }
+
             if (!Shell.getShell().isRoot) {
                 Shell.getCachedShell()?.close()
                 sb.append('\n').append("Can't open root shell, try again...").append('\n')
@@ -193,7 +202,8 @@ private class ViewModel(
                 }
             }
 
-            Shell.cmd(Starter.internalCommand).to(object : CallbackList<String?>() {
+            val cmd = "pkill -9 -f rikka.shizuku.server.ShizukuService 2>/dev/null; pkill -9 -f shizuku_server 2>/dev/null; ${Starter.internalCommand}"
+            Shell.cmd(cmd).to(object : CallbackList<String?>() {
                 override fun onAddElement(s: String?) {
                     sb.append(s).append('\n')
                     postResult()
@@ -210,6 +220,14 @@ private class ViewModel(
     private fun startAdb(host: String, port: Int) {
         sb.append("Starting with wireless adb in port $port...").append('\n').append('\n')
         postResult()
+
+        if (Shizuku.pingBinder()) {
+            try {
+                Shizuku.exit()
+            } catch (tr: Throwable) {
+                // ignore
+            }
+        }
 
         adbWirelessHelper.startShizukuViaAdb(
             host = host,
