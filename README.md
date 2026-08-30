@@ -4,89 +4,118 @@
 
 ## Disclaimer
 
-This is a **fork** of Shizuku. If you are looking for the official Shizuku developed by Rikka, please visit the [**Official Repository**](https://github.com/RikkaApps/Shizuku).
+This is a modern fork and enhancement of Shizuku. If you are looking for the official upstream Shizuku developed by Rikka, please visit the [Official Repository](https://github.com/RikkaApps/Shizuku).
 
-## Changes and Enhancements in this Fork
+---
 
-- **Core Fixes and Optimizations**:
-  - ~~Randomize `/data/local/tmp/shizuku` directory name~~
-  - ~~Automatically delete `/data/local/tmp/shizuku_starter` files~~
-  - Enable ADB root permissions on userdebug ROMs.
-  - Support for custom ADB TCP/IP ports, resolving conflicts when the default port 5555 is occupied.
+## Features and Enhancements in Shizuku-Next
 
-- **Automation and Watchdog**:
-  - **Start on Boot (Wireless ADB)**: Supports rooted devices and Android 11+ (Wireless ADB) to automatically start the service on boot without a computer.
-  - **Auto Wake-up**: When an application requests Shizuku service, the Manager will attempt to automatically wake up the background service via Wireless ADB if it is not running.
-  - **Watchdog Service**: Introduced a watchdog service for ADB mode that monitors the service status in real-time and automatically repairs disconnections, significantly improving stability.
+### 1. Platform & Toolchain Modernization
+- **Android 17 Support (Baklava / API 37)**: Built with `compileSdk = 37`, `targetSdk = 37`, Java 21, and NDK r29.
+- **Latest AndroidX Ecosystem**: Upgraded to latest dependencies (`androidx.core: 1.19.0`, `androidx.annotation: 1.10.0`, `androidx.browser: 1.10.0`, `bouncycastle: 1.85`).
+- **AGP 8.10.x & Java 21 Compatibility**: Bypassed AGP AAR metadata check constraints to allow modern AndroidX libraries without build incompatibilities.
+- **Removed Deprecated Lifecycle Artifacts**: Cleaned up obsolete dependencies to prevent runtime lifecycle errors.
 
-- **Workflow Optimizations**:
-  - **One-tap Notification Start**: Optimized the Wireless ADB pairing process. After successful pairing, users can start the service directly from the system notification without returning to the app.
-  - **TV Device Optimization**: Tailored startup logic and UI layout for Android TV and set-top boxes, ensuring compatibility with remote control operations.
+### 2. Multi-Layer Stealth Mode & Component Concealment
+- **Per-App Stealth Shield**: Dedicated "Hide from Apps" management interface with real-time package search and state filters.
+- **Dynamic Binder Token Guarding**: Blocked applications querying the Shizuku Binder token are rejected at the IPC boundary.
+- **Live Real-Time Server Synchronization**: Server-side authorized package table dynamically updates when toggling apps without requiring daemon restarts (`ShizukuService.setHiddenPackages`).
+- **PackageManager Component Redaction**: Intercepts `PackageManager` queries so protected apps cannot detect Shizuku manifest components, services, or activities.
 
-- **Modern Visual Experience**:
-  - **Material 3 UI**: Completely rewritten settings and management interfaces using **Jetpack Compose**, featuring smoother animations and more intuitive interaction logic.
-  - **Dynamic Colors (Material You)**: Full support for Android 12+ dynamic color systems; the interface tone automatically adjusts to your system wallpaper.
-  - **Pure Black Dark Mode**: Added a "Pure Black" theme option for OLED screens, providing extreme visual contrast and effective power saving.
+### 3. Privileged Battery Optimization Bypass
+- **Direct Shell Whitelisting**: Executes `cmd deviceidle whitelist +<pkg>`, `dumpsys deviceidle whitelist +<pkg>`, and `cmd appops set <pkg> RUN_IN_BACKGROUND allow` directly via privileged Shizuku shell or root.
+- **Automatic Daemon Whitelisting**: Automatically adds Shizuku to the system battery optimization whitelist upon service connection to prevent OEM background kills.
+- **One-Tap Status Tile**: Live battery optimization status card with instant bypass action in Settings.
+
+### 4. Material 3 Jetpack Compose Dashboard & Start Methods
+- **Material 3 Segmented Button Row**: Streamlined method selector (`SingleChoiceSegmentedButtonRow`) for Wireless ADB, Root, and Computer ADB.
+- **Context-Aware Smart Badging**: Automatically highlights and badges `Root (Recommended)` on rooted devices and `Wireless (Recommended)` on Android 11+ unrooted devices.
+- **Interactive 2-Step Wireless ADB Flow**: Numbered step-by-step workflow with live detected ADB port pill (`Port: <port>`).
+- **Zero-Config Terminal Integration**: Quick action tile detecting installed terminal applications (Termux, MT Manager, TermOne, etc.) with 1-tap `rish` configuration.
+- **Pure SVG Vector Outlined Icons**: Strict SVG vector compliance across the entire user interface with zero emojis.
+
+### 5. Automation, Watchdog & Startup
+- **ADB Watchdog Service**: Background monitor that actively tracks daemon health and automatically reconnects upon disconnection.
+- **Start on Boot**: Supports rooted devices and Android 11+ Wireless ADB (`WRITE_SECURE_SETTINGS`) to automatically start without a PC.
+- **Custom TCP/IP Port**: Configurable ADB port support for resolving port 5555 conflicts.
+- **Material You & Pure Black Theme**: Dynamic wallpaper color extraction and deep AMOLED pure black dark mode.
+
+### 6. Full Native Localization
+- Comprehensive native translations for Simplified Chinese, Traditional Chinese, Russian, Japanese, Spanish, German, French, Brazilian Portuguese, Indonesian, Vietnamese, Korean, and fallback support for all standard Android locales.
+
+---
 
 ## Usage Guide
 
 ### Start on Boot (Wireless ADB)
 1. Configure Shizuku following the Wireless ADB pairing process.
 2. Enable `Start on boot (Wireless ADB)` in Settings.
-   - This requires `WRITE_SECURE_SETTINGS` permission.
-   - It can be granted automatically by the Manager when Shizuku starts (if already running), or manually via ADB:
-     `adb shell pm grant moe.shizuku.privileged.api android.permission.WRITE_SECURE_SETTINGS`
+   - Requires `WRITE_SECURE_SETTINGS` permission.
+   - Can be granted automatically when Shizuku starts, or manually via ADB:
+     ```bash
+     adb shell pm grant moe.shizuku.privileged.api android.permission.WRITE_SECURE_SETTINGS
+     ```
 
 > [!CAUTION]
-> `WRITE_SECURE_SETTINGS` is a high-risk permission. Use it only if you understand the risks. The developers are not responsible for any consequences.
+> `WRITE_SECURE_SETTINGS` is a privileged permission. Use only if you understand the risks.
 
 ### Startup Support Details
-- **Root Mode**: Supports most rooted devices to automatically load the service on boot.
-- **Wireless ADB Mode**: For Android 11+. Uses `WRITE_SECURE_SETTINGS` to monitor network status and restart Shizuku automatically without a PC.
-- **TV Devices**: Specifically optimized for stability in television environments.
+- **Root Mode**: Automatically loads the service on boot on rooted devices.
+- **Wireless ADB Mode**: For Android 11+. Uses `WRITE_SECURE_SETTINGS` to monitor network connectivity and restart Shizuku automatically without a computer.
+- **TV Devices**: Specifically optimized for stability and remote navigation in Android TV environments.
 
-## Background
+---
 
-When developing apps that require root, the most common method is to execute commands in a su shell. For example, some apps use the `pm enable/disable` command to enable or disable components.
-
-This approach has significant drawbacks:
-1. **Very slow** (multiple processes are created).
-2. **Unreliable** (requires handling text output).
-3. Restricted to existing commands.
-4. Requires root even if ADB has sufficient permissions.
-
-Shizuku uses a completely different approach. See below for details.
-
-## Guide & Download
-Official documentation and downloads: <https://shizuku.rikka.app/>
-
-## How Shizuku Works?
+## How Shizuku Works
 
 Android uses `binder` for inter-process communication (IPC). Shizuku guides users to start a process (Shizuku server) with root or ADB privileges. When an application starts, a `binder` pointing to the Shizuku server is sent to the application.
 
 Shizuku acts as an intermediary: it receives requests from applications, forwards them to the system server, and returns the results. This allows apps to use system APIs with higher privileges, which is almost identical to calling system APIs directly.
 
+---
+
 ## Developer Guide
-Refer to: <https://github.com/RikkaApps/Shizuku-API>
 
-## Developing Shizuku
+Refer to the official API repository: [RikkaApps/Shizuku-API](https://github.com/RikkaApps/Shizuku-API)
 
-### Build
-- Clone with `git clone --recurse-submodules`.
-- Run gradle task `:manager:assembleDebug` or `:manager:assembleRelease`.
+---
 
-The `:manager:assembleDebug` task generates a debuggable server. You can attach a debugger to the `shizuku_server` process. Ensure "Always install with package manager" is checked in Android Studio settings.
+## Building Shizuku-Next
+
+### Prerequisites
+- JDK 21
+- Android SDK (API 37 / Android 17)
+- Android NDK (r29 or newer)
+- CMake 3.22.1+
+
+### Build Commands
+```bash
+# Clone repository with submodules
+git clone --recurse-submodules https://github.com/Towartz/Shizuku-Next.git
+
+# Build Debug APK
+./gradlew :manager:assembleDebug
+
+# Build Release APK
+./gradlew :manager:assembleRelease
+```
+
+---
 
 ## License
-Licensed under Apache 2.0.
+
+Licensed under the Apache 2.0 License.
 
 Under Apache 2.0 section 6:
-* **FORBIDDEN** to use `ic_launcher` images unless for Shizuku itself.
-* **FORBIDDEN** to use `Shizuku` as app name or `moe.shizuku.privileged.api` as ID.
+- FORBIDDEN to use `ic_launcher` images unless for Shizuku itself.
+- FORBIDDEN to use `Shizuku` as app name or `moe.shizuku.privileged.api` as ID in third-party distributions.
+
+---
 
 ## Credits
-- [RikkaApps/Shizuku](https://github.com/RikkaApps/Shizuku)
+
+- [RikkaApps/Shizuku](https://github.com/RikkaApps/Shizuku) (Original upstream)
 - [yangFenTuoZi/Shizuku](https://github.com/yangFenTuoZi/Shizuku)
 - [pixincreate/Shizuku](https://github.com/pixincreate/Shizuku)
 - [thedjchi/Shizuku](https://github.com/thedjchi/Shizuku)
-- ...
+- [HSSkyBoy/Shizuku](https://github.com/HSSkyBoy/Shizuku)
