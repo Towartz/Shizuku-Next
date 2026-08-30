@@ -13,7 +13,6 @@
     <string name="home_wireless_adb_description_pre_11">Înainte de Android 11, este necesară conectarea la un computer pentru a activa depanarea fără fir.</string>
     <string name="home_wireless_adb_view_guide_button">Ghidul pas cu pas</string>
     <string name="dialog_adb_discovery">Se caută serviciul de depanare fără fir</string>
-    <string name="dialog_adb_port">Port</string>
     <string name="dialog_adb_invalid_port">Portul este un număr întreg cuprins între 10 și 65535.</string>
     <string name="dialog_adb_pairing_title">Asociază cu dispozitivul</string>
     <string name="dialog_adb_pairing_discovery">Se caută serviciul de asociere</string>
@@ -135,118 +134,12 @@
 \nPoate fi necesar să repornești Shizuku pentru ca operațiunea să intre în vigoare.</string>
     <string name="home_adb_is_limited_title">Trebuie să faci un pas suplimentar</string>
     <string name="dialog_adb_discovery_message_toggle_wireless_debugging">Încearcă să dezactivezi și să activezi „Depanare fără fir” dacă caută în continuare.</string>
-    <string name="about_follow_channel"><![CDATA[Follow NPCN at Telegram]]></string>
-    <string name="action_back">Back</string>
-    <string name="action_open">Open</string>
-    <string name="action_retry">Retry</string>
-    <string name="adb_pairing_tutorial_content_network_blocked">The pairing process needs local network access to discover the pairing service. Please allow local network access for Shizuku.</string>
-    <string name="adb_pairing_tutorial_content_pairing_service_failed">Could not start the pairing service. Please try again.</string>
     <string name="app_name" translatable="false">Shizuku Next</string>
-    <string name="auto">Auto</string>
-    <string name="auto_pairing_notification_access_tooltip">Auto-pairing requires Notification Access to capture the pairing code from system settings.</string>
-    <string name="boot_start_action_attempt_now">Attempt now</string>
-    <string name="boot_start_connecting">Trying to start Shizuku with wireless ADB</string>
-    <string name="boot_start_notification_title">Wireless ADB auto-start</string>
-    <string name="boot_start_waiting_for_retry">Waiting to retry auto-start</string>
-    <string name="boot_start_waiting_for_unlock">Waiting for device unlock to continue auto-start</string>
-    <string name="boot_start_waiting_for_wifi">Waiting for Wi-Fi or a reachable TCP ADB port</string>
-    <string name="cancel">Cancel</string>
-    <string name="dark_theme">Dark theme</string>
-    <string name="dark_theme_off">Off</string>
-    <string name="dark_theme_on">On</string>
-    <string name="follow_system">Follow system</string>
-    <string name="grant_dialog_button_allow_once">Allow once</string>
-    <string name="hide_apps_action_hide_all">Hide all apps</string>
-    <string name="hide_apps_action_unhide_all">Unhide all apps</string>
-    <string name="hide_apps_badge_hidden">Hidden</string>
-    <string name="hide_apps_count">%d apps hidden</string>
-    <string name="hide_apps_filter_all">All</string>
-    <string name="hide_apps_filter_hidden">Hidden</string>
-    <string name="hide_apps_none">No apps found</string>
-    <string name="hide_apps_search_hint">Search apps…</string>
-    <string name="hide_apps_show_system">Show system apps</string>
-    <string name="hide_apps_stats">%1$d of %2$d apps hidden</string>
-    <string name="hide_apps_title">Hide from apps</string>
-    <string name="home_command_copied">Command copied to clipboard</string>
-    <string name="home_command_copy">Copy Command</string>
-    <string name="home_grid_docs">Documentation</string>
-    <string name="home_grid_docs_summary">Guides &amp; Help</string>
-    <string name="home_metric_authorized">Authorized</string>
-    <string name="home_metric_hidden">Hidden</string>
-    <string name="home_metric_terminal">Terminal</string>
-    <string name="home_metric_terminal_desc">rish ready</string>
-    <string name="home_section_management">Management &amp; Security</string>
-    <string name="home_section_start_methods">Start Methods</string>
-    <string name="home_start_adb_summary">Start via USB or Wi-Fi using your computer\'s terminal</string>
-    <string name="home_start_root_summary">Start directly using Superuser/Root access</string>
-    <string name="home_start_wireless_summary">Start without root or computer over Wi-Fi (Android 11+)</string>
-    <string name="home_status_active">Active</string>
-    <string name="home_status_compose_not_running_summary">Connect again to restore privileged access.</string>
-    <string name="home_status_inactive">Not Running</string>
-    <string name="home_tab_computer">Computer</string>
-    <string name="home_tab_root">Root</string>
-    <string name="home_tab_root_recommended">Root (Recommended)</string>
-    <string name="home_tab_wireless">Wireless ADB</string>
-    <string name="home_tab_wireless_recommended">Wireless (Recommended)</string>
-    <string name="home_wireless_btn_pair">Pair Device</string>
-    <string name="home_wireless_btn_start">Start Shizuku</string>
-    <string name="home_wireless_open_dev_options">Developer Options</string>
-    <string name="home_wireless_port_active">Wireless Debugging Ready (Port: %d)</string>
-    <string name="home_wireless_step_1_title">Step 1: Pairing</string>
-    <string name="home_wireless_step_2_title">Step 2: Start Service</string>
-    <string name="home_wireless_step_dev_options_desc">Turn on Wireless debugging in Developer options while connected to Wi-Fi.</string>
-    <string name="home_wireless_step_dev_options_title">1. Enable Wireless Debugging</string>
-    <string name="home_wireless_step_pairing">Pairing</string>
-    <string name="home_wireless_step_pairing_desc">Pair your device using the 6-digit code in the notification.</string>
-    <string name="home_wireless_step_pairing_title">2. Pair Device (One-time)</string>
-    <string name="home_wireless_step_start">Start</string>
-    <string name="home_wireless_step_start_desc">Connect to the active Wireless debugging service and launch the server.</string>
-    <string name="home_wireless_step_start_title">3. Start Shizuku</string>
-    <string name="manual">Manual</string>
-    <string name="more_options">More options</string>
-    <string name="notification_channel_boot_start">Wireless ADB auto-start</string>
-    <string name="notification_channel_watchdog">Watchdog status</string>
-    <string name="notification_watchdog_content">Shizuku will be restarted automatically if the service is killed</string>
-    <string name="notification_watchdog_reconnecting">Reconnecting Shizuku… (Attempt %1$d/%2$d)</string>
-    <string name="notification_watchdog_title">Shizuku watchdog is active</string>
-    <string name="notification_watchdog_waiting">Waiting for network/device to reconnect Shizuku</string>
-    <string name="permission_disabled_feature">Feature disabled due to missing permission</string>
     <string name="permission_group_description" translatable="false">@string/permission_label</string>
     <string name="permission_group_label" translatable="false">Shizuku</string>
-    <string name="permission_missing">Permission required</string>
-    <string name="permission_write_secure_settings_grant_info">This permission can be granted via ADB using the command:\nadb shell pm grant moe.shizuku.manager android.permission.WRITE_SECURE_SETTINGS</string>
-    <string name="permission_write_secure_settings_required">WRITE_SECURE_SETTINGS permission is required for this feature</string>
     <string name="service_user_adb" translatable="false">adb</string>
     <string name="service_user_root" translatable="false">root</string>
-    <string name="settings_adb_root">ADB root (rooted debugging)</string>
-    <string name="settings_adb_root_summary">Operating Systems based on the userdebug builds, Shizuku can have rooted debugging to start at boot.</string>
-    <string name="settings_auto_pairing">Auto-pairing</string>
-    <string name="settings_auto_pairing_summary">Automatically capture pairing code from notification</string>
-    <string name="settings_battery_optimization">Battery optimization</string>
-    <string name="settings_battery_optimization_optimized">Optimized (tap to disable)</string>
-    <string name="settings_battery_optimization_summary">Disable battery optimization to allow Shizuku auto-start in the background reliably</string>
-    <string name="settings_battery_optimization_unrestricted">Unrestricted</string>
-    <string name="settings_grant_note"><![CDATA[<h1>Note</h1>\n<p>This feature requires <u><tt>WRITE_SECURE_SETTINGS</tt></u> permission.</p>\n<h1>Warning</h1>\n<p><u><tt>WRITE_SECURE_SETTINGS</tt></u> is a very sensitive permission and enable it only if you know what you\'re doing. I\'m not responsible for whatever may happen later on.</p>]]></string>
-    <string name="settings_hide_from_apps">Hide from apps</string>
-    <string name="settings_hide_from_apps_summary">Prevent selected apps from detecting Shizuku via ContentProvider and IPC probing</string>
     <string name="settings_language_system" translatable="false">Follow System</string>
-    <string name="settings_start_on_boot_wireless">Auto-start on Wi-Fi (wireless ADB)</string>
-    <string name="settings_start_on_boot_wireless_summary">Automatically start Shizuku when Wi-Fi is connected. Requires WRITE_SECURE_SETTINGS permission.</string>
-    <string name="settings_tcpip_port">TCP/IP port</string>
-    <string name="settings_tcpip_port_disabled">Disabled</string>
-    <string name="settings_tcpip_port_summary">After starting via wireless debugging, change the TCP/IP listening port of adbd.\nClick Edit. If left blank, it will be considered disabled.</string>
-    <string name="settings_translation_contributors_fallback">Community maintained</string>
-    <string name="settings_use_system_color_summary">Follow Material You dynamic color when available.</string>
-    <string name="settings_watchdog_adb">ADB/TCP watchdog</string>
-    <string name="settings_watchdog_adb_summary">Monitor Shizuku after ADB/TCP start and automatically restart it up to 5 times if the service is killed</string>
-    <string name="start_service_timeout">Shizuku service did not respond in time. Please try starting again.</string>
     <string name="starting_on_wireless_adb" translatable="false">Starting service with wirelessADB…</string>
     <string name="starting_root_shell" translatable="false">Starting root shell…</string>
-    <string name="stealth_mode_notice">Modern Shizuku apps communicate directly via Binder and will continue to work normally.</string>
-    <string name="stealth_mode_summary">Conceal exported intent filters and receivers from app package scanners</string>
-    <string name="stealth_mode_title">Stealth mode</string>
-    <string name="wireless_boot_component_error">Failed to enable boot component</string>
-    <string name="wireless_boot_enabled">Wireless ADB auto-start enabled</string>
-    <string name="wireless_boot_permission_tooltip">To automatically start Shizuku on boot with wireless ADB, the WRITE_SECURE_SETTINGS permission must be granted</string>
-    <string name="wireless_boot_wifi_required">This feature requires Wi-Fi connection to work</string>
 </resources>

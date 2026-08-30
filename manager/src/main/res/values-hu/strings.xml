@@ -1,14 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">Shizuku Next HU</string>
-    <!-- To translators: you can leave your here -->
     <string name="translation_contributors">gidano - sympda.blog.hu</string>
-    <!-- Home - Status -->
     <string name="home_status_service_is_running">A %1$s fut</string>
     <string name="home_status_service_not_running">A %1$s nem fut</string>
     <string name="home_status_service_version">Verzió %2$s, %1$s</string>
     <string name="home_status_service_version_update"><![CDATA[Verzió %2$s, %1$s<br>Kezdje újra a %3$s verzióra való frissítéshez]]></string>
-    <!-- Home - Adb -->
     <string name="home_adb_title"><![CDATA[Kezdje a számítógéphez való csatlakozással]]></string>
     <string name="home_adb_description"><![CDATA[Root nélküli eszközök esetén az adb-t kell használnia a Shizuku elindításához (számítógépes kapcsolat szükséges). Ezt a folyamatot minden alkalommal meg kell ismételni az eszköz újraindításakor. Kérem <b><a href=\"%1$s\">olvassa el a súgót</a></b>.]]></string>
     <string name="home_adb_button_view_help">Olvassa el a súgót</string>
@@ -16,15 +13,12 @@
     <string name="home_adb_dialog_view_command_message">&lt;font face=monospace&gt;%1$s&lt;/font&gt;&lt;br&gt;&lt;br&gt;* Vannak más szempontok is, kérjük erősítse meg, hogy először elolvasta a súgót.</string>
     <string name="home_adb_dialog_view_command_copy_button">Másolás</string>
     <string name="home_adb_dialog_view_command_button_send">Küldés</string>
-    <!-- Home - Wireless Adb -->
     <string name="home_wireless_adb_title"><![CDATA[Kezdje a vezeték nélküli hibakereséssel]]></string>
     <string name="home_wireless_adb_description"><![CDATA[Android 11 vagy újabb rendszeren engedélyezheti a vezeték nélküli hibakeresést, és közvetlenül az eszközéről indíthatja el a Shizukut, anélkül, hogy számítógéphez csatlakozna..<p>Először tekintse meg a lépésről lépésre szóló útmutatót.]]></string>
     <string name="home_wireless_adb_description_pre_11"><![CDATA[Az Android 11 előtt a vezeték nélküli hibakeresés engedélyezéséhez csatlakozni kell egy számítógéphez.]]></string>
     <string name="home_wireless_adb_view_guide_button">Lépésről-lépésre útmutató</string>
-    <!-- Adb -->
     <string name="dialog_adb_discovery">Vezeték nélküli hibakereső szolgáltatás keresése</string>
     <string name="dialog_adb_discovery_message">Engedélyezze a \"Vezeték nélküli hibakeresés\"t a \"Fejlesztői lehetőségek\"nél. A \"Vezeték nélküli hibakeresés\" hálózatváltáskor auto. le van tiltva.\n\nMegj.: ne tiltsa le a \"Fejlesztői lehetőségek\"et vagy az \"USB hibakeresés\"t, ekkor a Shizuku le fog állni.</string>
-    <string name="dialog_adb_port">Port</string>
     <string name="dialog_adb_invalid_port">A port egy 10 és 65535 közötti egész szám.</string>
     <string name="adb_pairing">Párosítás</string>
     <string name="dialog_adb_pairing_title">Párosítás a készülékkel</string>
@@ -51,13 +45,11 @@
     <string name="adb_pairing_tutorial_content_finish">Vissza és Shizuku elindítása.</string>
     <string name="adb_pairing_tutorial_content_network">A Shizukunak hozzá kell férnie a helyi hálózathoz. A hálózati engedély vezérli.</string>
     <string name="adb_pairing_tutorial_content_network_limation_not_foreground">Egyes rendszerek (például a MIUI) nem engedélyezik az alkalmazások számára, hogy hozzáférjenek a hálózathoz ha nem láthatók, még akkor sem, ha az alkalmazás alapértelmezés szerint előtérbeli szolgáltatást használ. Kapcsolja ki a Shizuku akku optimalizálási funkcióit az ilyen rendszereken.</string>
-    <!-- Home - Root -->
     <string name="home_root_title">Indítás (rootolt eszközökhöz)</string>
     <string name="home_root_description"><![CDATA[Ezenkívül a Shizuku automatikusan elindítható rendszerindításkor. Ha nem, ellenőrizze, hogy rendszere vagy harmadik féltől származó eszközei nem korlátozták-e a Shizukut.<br>A következőre hivatkozhat: %s.]]></string>
     <string name="home_root_description_sui"><![CDATA[Ha Magisk-et használ, megpróbálhatja a %1$s-t. A root felhasználók számára végül felváltja a Shizukut. Megj.: a meglévő alkalmazásokat kissé módosítani kell a %2$s használatához.]]></string>
     <string name="home_root_button_start">Indítás</string>
     <string name="home_root_button_restart">Újraindítás</string>
-    <!-- Home - Application management -->
     <string name="home_app_management_title">Alkalmazáskezelés</string>
     <plurals name="home_app_management_authorized_apps_count">
         <item quantity="one"><![CDATA[%d app engedélyezett]]></item>
@@ -65,17 +57,13 @@
     </plurals>
     <string name="home_app_management_view_authorized_apps"><![CDATA[Érintse meg az engedélyezett alkalmazások kezeléséhez]]></string>
     <string name="home_app_management_empty">Itt jelennek meg azok az alkalmazások, amelyek Shizukut kértek vagy bejelentettek.</string>
-    <!-- Home - Learn more -->
     <string name="home_learn_more_title">Tanulja a Shizukut</string>
     <string name="home_learn_more_description">Tanuljon meg fejlődni a Shizukuval</string>
-    <!-- Home - Adb permissions limited -->
     <string name="home_adb_is_limited_title">Egy plusz lépést kell tennie</string>
     <string name="home_adb_is_limited_description">Az eszköz gyártója korlátozta az adb-engedélyeket, és a Shizuku-t használó alkalmazások nem működnek megfelelően.\n\nÁltalában ez a korlátozás bizonyos beállítások módosításával feloldható a \"Fejlesztői lehetőségek\"-nél. Kérjük, olvassa el a súgót ennek részleteiért.\n\nLehet, hogy újra kell indítania a Shizukut, hogy a művelet érvénybe lépjen.</string>
-    <!-- Application management -->
     <string name="app_management_dialog_adb_is_limited_title">Az adb engedélye korlátozott</string>
     <string name="app_management_dialog_adb_is_limited_message"><![CDATA[Nagyon valószínű, hogy az eszköz gyártója korlátozza az adb engedélyét.<p>Lehet, hogy van megoldás a rendszeréhez ebben a <b><a href=\"%1$s\">dokumentumban</a></b>.]]></string>
     <string name="app_management_item_summary_requires_root">* szükséges, hogy a Shizuku root-on fusson</string>
-    <!-- Terminal -->
     <string name="home_terminal_title">Használja a Shizukut a terminál appokban</string>
     <string name="home_terminal_description">Futtasson parancsokat a Shizuku-n keresztül a kívánt terminálalkalmazásokban</string>
     <string name="terminal_tutorial_1">Először is exportálja a fájlokat a kívánt helyre. Két fájlt fog találni, %1$s és %2$s.</string>
@@ -89,7 +77,6 @@
 A %1$s segítségével bármely terminálalkalmazásban csatlakozhat a Shizuku által futtatott shellhez, és kommunikálhat vele.
 <p>A %1$s részletes használatáról, érintse a dokumentum megtekintéséhez.
     ]]></string>
-    <!-- Settings -->
     <string name="settings_title">Beállítások</string>
     <string name="settings_language">Nyelv</string>
     <string name="settings_user_interface">Megjelenés</string>
@@ -102,13 +89,10 @@ A %1$s segítségével bármely terminálalkalmazásban csatlakozhat a Shizuku �
     <string name="settings_start_on_boot">Induljon rendszerindításkor (root)</string>
     <string name="settings_start_on_boot_summary">Rootolt eszközök esetén a Shizuku képes auto. elindulni rendszerindításkor</string>
     <string name="settings_use_system_color">Használja a rendszertéma színét</string>
-    <!-- About -->
     <string name="action_about">Rólunk</string>
     <string name="about_view_source_code"><![CDATA[Forráskód megtekintése itt: %s]]></string>
-    <!-- Stop -->
     <string name="action_stop">A Shizuku leállítása</string>
     <string name="dialog_stop_message">A Shizuku szolgáltatás leáll.</string>
-    <!-- Notification -->
     <string name="notification_channel_service_status">Szolgáltatásindítási állapot</string>
     <string name="notification_service_starting">A Shizuku szolgáltatás indul…</string>
     <string name="notification_service_start_failed">A Shizuku szolgáltatás indítása nem sikerült.</string>
@@ -124,7 +108,6 @@ A %1$s segítségével bármely terminálalkalmazásban csatlakozhat a Shizuku �
     <string name="notification_adb_pairing_succeed_text">Most elindíthatja a Shizuku szolgáltatást.</string>
     <string name="notification_adb_pairing_failed_title">A párosítás nem sikerült</string>
     <string name="notification_adb_pairing_retry">Újra</string>
-    <!-- Permission related, appears in system permission UI -->
     <string name="permission_group_label" translatable="false">Shizuku</string>
     <string name="permission_group_description" translatable="false">@string/permission_label</string>
     <string name="permission_label">Shizuku hozzáférés</string>
@@ -132,129 +115,20 @@ A %1$s segítségével bármely terminálalkalmazásban csatlakozhat a Shizuku �
     <string name="permission_warning_template"><![CDATA[Engedélyezi <b>%1$s</b> ide, %2$s?]]></string>
     <string name="grant_dialog_button_allow_always">Mindig engedje meg</string>
     <string name="grant_dialog_button_deny">"Megtagad"</string>
-    <!-- Starter -->
     <string name="starter">Indító</string>
     <string name="starting_root_shell" translatable="false">Root shell indítása…</string>
     <string name="start_with_root_failed">A szolgáltatás nem indítható el, mert nincs root jogosultság megadva, vagy ez az eszköz nincs rootolva.</string>
-    <!-- Misc -->
     <string name="dialog_cannot_open_browser_title">Nem lehet elindítani a böngészőt</string>
     <string name="toast_copied_to_clipboard">%s\n a vágólapra másolva.</string>
     <string name="toast_copied_to_clipboard_with_text"><![CDATA[<b>%s</b> a vágólapra másolva.]]></string>
-    <!-- Messages for legacy -->
     <string name="dialog_legacy_not_support_title">%1$s nem támogatja a modern Shizukut</string>
     <string name="dialog_legacy_not_support_message"><![CDATA[Az örökölt Shizuku 2019 márciusa óta elavult. Ezenkívül a régi Shizuku nem működik újabb Android-rendszereken.<p>Kérdezze meg a fejlesztőt <b>%1$s</b> frissítéséről.]]></string>
     <string name="dialog_requesting_legacy_title">%1$s az örökölt Shizukut kéri</string>
     <string name="dialog_requesting_legacy_message"><![CDATA[<b>%1$s</b> modern Shizuku támogatással rendelkezik, de az örökölt Shizukut kéri. Ez azért lehet, mert a Shizuku nem fut, ellenőrizze a Shizuku alkalmazást.<p>Az örökölt Shizuku 2019 márciusa óta elavult.]]></string>
     <string name="dialog_requesting_legacy_button_open_shizuku">Nyissa meg a Shizukut</string>
     <string name="dialog_adb_discovery_message_toggle_wireless_debugging">Próbálja kikapcsolni majd engedélyezni a \"Vezeték nélküli hibakeresés\" opciót, ha továbbra is keres.</string>
-    <string name="about_follow_channel"><![CDATA[Follow NPCN at Telegram]]></string>
-    <string name="action_back">Back</string>
-    <string name="action_open">Open</string>
-    <string name="action_retry">Retry</string>
-    <string name="adb_pairing_tutorial_content_network_blocked">The pairing process needs local network access to discover the pairing service. Please allow local network access for Shizuku.</string>
-    <string name="adb_pairing_tutorial_content_pairing_service_failed">Could not start the pairing service. Please try again.</string>
-    <string name="auto">Auto</string>
-    <string name="auto_pairing_notification_access_tooltip">Auto-pairing requires Notification Access to capture the pairing code from system settings.</string>
-    <string name="boot_start_action_attempt_now">Attempt now</string>
-    <string name="boot_start_connecting">Trying to start Shizuku with wireless ADB</string>
-    <string name="boot_start_notification_title">Wireless ADB auto-start</string>
-    <string name="boot_start_waiting_for_retry">Waiting to retry auto-start</string>
-    <string name="boot_start_waiting_for_unlock">Waiting for device unlock to continue auto-start</string>
-    <string name="boot_start_waiting_for_wifi">Waiting for Wi-Fi or a reachable TCP ADB port</string>
-    <string name="cancel">Cancel</string>
-    <string name="dark_theme">Dark theme</string>
-    <string name="dark_theme_off">Off</string>
-    <string name="dark_theme_on">On</string>
-    <string name="follow_system">Follow system</string>
-    <string name="grant_dialog_button_allow_once">Allow once</string>
-    <string name="hide_apps_action_hide_all">Hide all apps</string>
-    <string name="hide_apps_action_unhide_all">Unhide all apps</string>
-    <string name="hide_apps_badge_hidden">Hidden</string>
-    <string name="hide_apps_count">%d apps hidden</string>
-    <string name="hide_apps_filter_all">All</string>
-    <string name="hide_apps_filter_hidden">Hidden</string>
-    <string name="hide_apps_none">No apps found</string>
-    <string name="hide_apps_search_hint">Search apps…</string>
-    <string name="hide_apps_show_system">Show system apps</string>
-    <string name="hide_apps_stats">%1$d of %2$d apps hidden</string>
-    <string name="hide_apps_title">Hide from apps</string>
-    <string name="home_command_copied">Command copied to clipboard</string>
-    <string name="home_command_copy">Copy Command</string>
-    <string name="home_grid_docs">Documentation</string>
-    <string name="home_grid_docs_summary">Guides &amp; Help</string>
-    <string name="home_metric_authorized">Authorized</string>
-    <string name="home_metric_hidden">Hidden</string>
-    <string name="home_metric_terminal">Terminal</string>
-    <string name="home_metric_terminal_desc">rish ready</string>
-    <string name="home_section_management">Management &amp; Security</string>
-    <string name="home_section_start_methods">Start Methods</string>
-    <string name="home_start_adb_summary">Start via USB or Wi-Fi using your computer\'s terminal</string>
-    <string name="home_start_root_summary">Start directly using Superuser/Root access</string>
-    <string name="home_start_wireless_summary">Start without root or computer over Wi-Fi (Android 11+)</string>
-    <string name="home_status_active">Active</string>
-    <string name="home_status_compose_not_running_summary">Connect again to restore privileged access.</string>
-    <string name="home_status_inactive">Not Running</string>
-    <string name="home_tab_computer">Computer</string>
-    <string name="home_tab_root">Root</string>
-    <string name="home_tab_root_recommended">Root (Recommended)</string>
-    <string name="home_tab_wireless">Wireless ADB</string>
-    <string name="home_tab_wireless_recommended">Wireless (Recommended)</string>
-    <string name="home_wireless_btn_pair">Pair Device</string>
-    <string name="home_wireless_btn_start">Start Shizuku</string>
-    <string name="home_wireless_open_dev_options">Developer Options</string>
-    <string name="home_wireless_port_active">Wireless Debugging Ready (Port: %d)</string>
-    <string name="home_wireless_step_1_title">Step 1: Pairing</string>
-    <string name="home_wireless_step_2_title">Step 2: Start Service</string>
-    <string name="home_wireless_step_dev_options_desc">Turn on Wireless debugging in Developer options while connected to Wi-Fi.</string>
-    <string name="home_wireless_step_dev_options_title">1. Enable Wireless Debugging</string>
-    <string name="home_wireless_step_pairing">Pairing</string>
-    <string name="home_wireless_step_pairing_desc">Pair your device using the 6-digit code in the notification.</string>
-    <string name="home_wireless_step_pairing_title">2. Pair Device (One-time)</string>
-    <string name="home_wireless_step_start">Start</string>
-    <string name="home_wireless_step_start_desc">Connect to the active Wireless debugging service and launch the server.</string>
-    <string name="home_wireless_step_start_title">3. Start Shizuku</string>
-    <string name="manual">Manual</string>
-    <string name="more_options">More options</string>
-    <string name="notification_channel_boot_start">Wireless ADB auto-start</string>
-    <string name="notification_channel_watchdog">Watchdog status</string>
-    <string name="notification_watchdog_content">Shizuku will be restarted automatically if the service is killed</string>
-    <string name="notification_watchdog_reconnecting">Reconnecting Shizuku… (Attempt %1$d/%2$d)</string>
-    <string name="notification_watchdog_title">Shizuku watchdog is active</string>
-    <string name="notification_watchdog_waiting">Waiting for network/device to reconnect Shizuku</string>
-    <string name="permission_disabled_feature">Feature disabled due to missing permission</string>
-    <string name="permission_missing">Permission required</string>
-    <string name="permission_write_secure_settings_grant_info">This permission can be granted via ADB using the command:\nadb shell pm grant moe.shizuku.manager android.permission.WRITE_SECURE_SETTINGS</string>
-    <string name="permission_write_secure_settings_required">WRITE_SECURE_SETTINGS permission is required for this feature</string>
     <string name="service_user_adb" translatable="false">adb</string>
     <string name="service_user_root" translatable="false">root</string>
-    <string name="settings_adb_root">ADB root (rooted debugging)</string>
-    <string name="settings_adb_root_summary">Operating Systems based on the userdebug builds, Shizuku can have rooted debugging to start at boot.</string>
-    <string name="settings_auto_pairing">Auto-pairing</string>
-    <string name="settings_auto_pairing_summary">Automatically capture pairing code from notification</string>
-    <string name="settings_battery_optimization">Battery optimization</string>
-    <string name="settings_battery_optimization_optimized">Optimized (tap to disable)</string>
-    <string name="settings_battery_optimization_summary">Disable battery optimization to allow Shizuku auto-start in the background reliably</string>
-    <string name="settings_battery_optimization_unrestricted">Unrestricted</string>
-    <string name="settings_grant_note"><![CDATA[<h1>Note</h1>\n<p>This feature requires <u><tt>WRITE_SECURE_SETTINGS</tt></u> permission.</p>\n<h1>Warning</h1>\n<p><u><tt>WRITE_SECURE_SETTINGS</tt></u> is a very sensitive permission and enable it only if you know what you\'re doing. I\'m not responsible for whatever may happen later on.</p>]]></string>
-    <string name="settings_hide_from_apps">Hide from apps</string>
-    <string name="settings_hide_from_apps_summary">Prevent selected apps from detecting Shizuku via ContentProvider and IPC probing</string>
     <string name="settings_language_system" translatable="false">Follow System</string>
-    <string name="settings_start_on_boot_wireless">Auto-start on Wi-Fi (wireless ADB)</string>
-    <string name="settings_start_on_boot_wireless_summary">Automatically start Shizuku when Wi-Fi is connected. Requires WRITE_SECURE_SETTINGS permission.</string>
-    <string name="settings_tcpip_port">TCP/IP port</string>
-    <string name="settings_tcpip_port_disabled">Disabled</string>
-    <string name="settings_tcpip_port_summary">After starting via wireless debugging, change the TCP/IP listening port of adbd.\nClick Edit. If left blank, it will be considered disabled.</string>
-    <string name="settings_translation_contributors_fallback">Community maintained</string>
-    <string name="settings_use_system_color_summary">Follow Material You dynamic color when available.</string>
-    <string name="settings_watchdog_adb">ADB/TCP watchdog</string>
-    <string name="settings_watchdog_adb_summary">Monitor Shizuku after ADB/TCP start and automatically restart it up to 5 times if the service is killed</string>
-    <string name="start_service_timeout">Shizuku service did not respond in time. Please try starting again.</string>
     <string name="starting_on_wireless_adb" translatable="false">Starting service with wirelessADB…</string>
-    <string name="stealth_mode_notice">Modern Shizuku apps communicate directly via Binder and will continue to work normally.</string>
-    <string name="stealth_mode_summary">Conceal exported intent filters and receivers from app package scanners</string>
-    <string name="stealth_mode_title">Stealth mode</string>
-    <string name="wireless_boot_component_error">Failed to enable boot component</string>
-    <string name="wireless_boot_enabled">Wireless ADB auto-start enabled</string>
-    <string name="wireless_boot_permission_tooltip">To automatically start Shizuku on boot with wireless ADB, the WRITE_SECURE_SETTINGS permission must be granted</string>
-    <string name="wireless_boot_wifi_required">This feature requires Wi-Fi connection to work</string>
 </resources>
