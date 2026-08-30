@@ -153,4 +153,5 @@
     <string name="home_wireless_open_dev_options">Geliştirici seçenekleri</string>
     <string name="home_wireless_btn_pair">Cihazı Eşle</string>
     <string name="home_wireless_btn_start">Shizuku\'yu Başlat</string>
+    <string name="home_status_root_available">Root erişimi algılandı</string>
 </resources>

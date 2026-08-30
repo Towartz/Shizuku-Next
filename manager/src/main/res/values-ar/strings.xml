@@ -157,4 +157,5 @@
     <string name="home_wireless_open_dev_options">خيارات المطور</string>
     <string name="home_wireless_btn_pair">إقران الجهاز</string>
     <string name="home_wireless_btn_start">تشغيل Shizuku</string>
+    <string name="home_status_root_available">تم اكتشاف وصول الروت</string>
 </resources>

@@ -153,4 +153,5 @@
     <string name="home_wireless_open_dev_options">Opzioni sviluppatore</string>
     <string name="home_wireless_btn_pair">Associa</string>
     <string name="home_wireless_btn_start">Avvia Shizuku</string>
+    <string name="home_status_root_available">Accesso Root rilevato</string>
 </resources>

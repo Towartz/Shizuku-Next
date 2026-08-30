@@ -154,4 +154,5 @@
     <string name="home_wireless_open_dev_options">Параметри розробника</string>
     <string name="home_wireless_btn_pair">З\'єднати</string>
     <string name="home_wireless_btn_start">Запустити Shizuku</string>
+    <string name="home_status_root_available">Виявлено доступ Root</string>
 </resources>

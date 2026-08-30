@@ -39,4 +39,5 @@
     <string name="home_wireless_open_dev_options">Opciones de desarrollador</string>
     <string name="home_wireless_btn_pair">Vincular</string>
     <string name="home_wireless_btn_start">Iniciar Shizuku</string>
+    <string name="home_status_root_available">Acceso Root detectado</string>
 </resources>

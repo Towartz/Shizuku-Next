@@ -153,4 +153,5 @@
     <string name="home_wireless_open_dev_options">Opções do desenvolvedor</string>
     <string name="home_wireless_btn_pair">Emparelhar</string>
     <string name="home_wireless_btn_start">Iniciar Shizuku</string>
+    <string name="home_status_root_available">Acesso Root detectado</string>
 </resources>

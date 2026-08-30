@@ -151,4 +151,5 @@
     <string name="home_wireless_open_dev_options">Opcje programisty</string>
     <string name="home_wireless_btn_pair">Sparuj</string>
     <string name="home_wireless_btn_start">Uruchom Shizuku</string>
+    <string name="home_status_root_available">Wykryto dostęp Root</string>
 </resources>
