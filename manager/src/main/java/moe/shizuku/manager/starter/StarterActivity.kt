@@ -181,17 +181,6 @@ private class ViewModel(
         postResult()
 
         viewModelScope.launch(Dispatchers.IO) {
-            if (Shizuku.pingBinder()) {
-                sb.append("Active Shizuku service detected — sending graceful shutdown signal...").append('\n')
-                postResult()
-                try {
-                    Shizuku.exit()
-                    kotlinx.coroutines.delay(200)
-                } catch (tr: Throwable) {
-                    // ignore
-                }
-            }
-
             if (!Shell.getShell().isRoot) {
                 Shell.getCachedShell()?.close()
                 sb.append('\n').append("Can't open root shell, try again...").append('\n')
@@ -204,7 +193,7 @@ private class ViewModel(
                 }
             }
 
-            val cmd = "pkill -9 -f rikka.shizuku.server.ShizukuService 2>/dev/null; pkill -9 -f shizuku_server 2>/dev/null; ${Starter.internalCommand}"
+            val cmd = Starter.internalCommand
             Shell.cmd(cmd).to(object : CallbackList<String?>() {
                 override fun onAddElement(s: String?) {
                     sb.append(s).append('\n')
@@ -224,17 +213,6 @@ private class ViewModel(
         postResult()
 
         viewModelScope.launch(Dispatchers.IO) {
-            if (Shizuku.pingBinder()) {
-                sb.append("Active Shizuku service detected — sending graceful shutdown signal...").append('\n')
-                postResult()
-                try {
-                    Shizuku.exit()
-                    kotlinx.coroutines.delay(200)
-                } catch (tr: Throwable) {
-                    // ignore
-                }
-            }
-
             adbWirelessHelper.startShizukuViaAdb(
                 host = host,
                 port = port,

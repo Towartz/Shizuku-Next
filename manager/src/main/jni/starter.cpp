@@ -239,8 +239,8 @@ int main(int argc, char *argv[]) {
     printf("info: starter begin\n");
     fflush(stdout);
 
-    // check and clean up any lingering server processes
-    printf("info: checking for lingering server processes...\n");
+    // check and terminate existing/running server processes
+    printf("info: checking for existing server processes...\n");
     fflush(stdout);
 
     int killed_count = 0;
@@ -250,11 +250,12 @@ int main(int argc, char *argv[]) {
         if (!is_shizuku_server(pid, s_target_process_name))
             return;
 
+        printf("info: found active server process %d (%s)\n", pid, s_target_process_name);
         if (kill(pid, SIGKILL) == 0) {
-            printf("info: killed lingering process %d (%s)\n", pid, s_target_process_name);
+            printf("info: killed process %d (%s)\n", pid, s_target_process_name);
             killed_count++;
         } else if (errno == EPERM) {
-            perrorf("fatal: can't kill %d, please try to stop existing Shizuku from app first.\n", pid);
+            perrorf("fatal: can't kill %d (owned by root), please try to stop existing Shizuku from app first.\n", pid);
             exit(EXIT_FATAL_KILL);
         } else {
             printf("warn: failed to kill %d\n", pid);
@@ -262,14 +263,12 @@ int main(int argc, char *argv[]) {
     });
 
     if (killed_count == 0) {
-        printf("info: process table clean (no lingering processes)\n");
+        printf("info: no existing server process running\n");
     } else {
-        printf("info: cleanly terminated %d lingering process(es)\n", killed_count);
+        printf("info: cleanly terminated %d existing process(es)\n", killed_count);
+        usleep(100000); // 100ms yield to allow OS to reclaim sockets & binder
     }
     fflush(stdout);
-
-    // Brief yield to allow OS to reclaim process table and binder descriptors
-    usleep(50000);
 
     if (access(apk_path.c_str(), R_OK) == 0) {
         printf("info: use apk path from argv\n");
