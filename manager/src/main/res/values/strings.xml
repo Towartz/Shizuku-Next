@@ -251,8 +251,12 @@ With %1$s, in any terminal app, you can connect to and interact with the shell r
     <string name="more_options">More options</string>
     <string name="home_status_compose_not_running_summary">Connect again to restore privileged access.</string>
     <string name="settings_translation_contributors_fallback">Community maintained</string>
-    <string name="settings_use_system_color_summary">Follow Material You dynamic color when available.</string>
     <string name="settings_tcpip_port_disabled">Disabled</string>
+    <string name="home_tab_root_recommended">Root (Recommended)</string>
+    <string name="home_tab_wireless_recommended">Wireless (Recommended)</string>
+    <string name="home_status_root_available">Root Available</string>
+    <string name="home_wireless_step_1_title">Step 1: Pairing</string>
+    <string name="home_wireless_step_2_title">Step 2: Start Service</string>
 
     <!-- Messages for legacy -->
     <string name="dialog_legacy_not_support_title">%1$s does not support modern Shizuku</string>

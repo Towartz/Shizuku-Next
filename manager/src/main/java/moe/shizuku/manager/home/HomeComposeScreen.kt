@@ -40,6 +40,10 @@ import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material.icons.outlined.Wifi
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -53,10 +57,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -318,64 +323,100 @@ private fun HomeScreenContent(
                 }
             }
 
-            // 4. Start Shizuku Section (Adaptive Tabs)
+            // 4. Start Shizuku Section (Segmented Row & Smart Recommendation)
             item {
-                SectionHeader(title = stringResource(R.string.home_section_start_methods))
-            }
-
-            item {
-                PrimaryTabRow(
-                    selectedTabIndex = selectedTab.ordinal,
-                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    divider = {}
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Tab(
-                        selected = selectedTab == StartMethodTab.WIRELESS,
-                        onClick = { selectedTab = StartMethodTab.WIRELESS },
-                        text = { Text(stringResource(R.string.home_tab_wireless)) },
-                        icon = { Icon(Icons.Outlined.Wifi, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                    )
-                    Tab(
-                        selected = selectedTab == StartMethodTab.ROOT,
-                        onClick = { selectedTab = StartMethodTab.ROOT },
-                        text = { Text(stringResource(R.string.home_tab_root)) },
-                        icon = { Icon(Icons.Outlined.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                    )
-                    Tab(
-                        selected = selectedTab == StartMethodTab.COMPUTER,
-                        onClick = { selectedTab = StartMethodTab.COMPUTER },
-                        text = { Text(stringResource(R.string.home_tab_computer)) },
-                        icon = { Icon(Icons.Outlined.Computer, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                    )
+                    SectionHeader(title = stringResource(R.string.home_section_start_methods))
+                    if (isRoot) {
+                        Surface(
+                            shape = MaterialTheme.shapes.extraSmall,
+                            color = MaterialTheme.colorScheme.primaryContainer
+                        ) {
+                            Text(
+                                text = stringResource(R.string.home_status_root_available),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
                 }
             }
 
             item {
-                when (selectedTab) {
-                    StartMethodTab.WIRELESS -> {
-                        WirelessAdbStartCard(
-                            onStart = onStartWirelessAdb,
-                            onPair = onPairWireless,
-                            onGuide = onOpenWirelessGuide
-                        )
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    val tabs = StartMethodTab.values()
+                    tabs.forEachIndexed { index, tab ->
+                        val isSelected = selectedTab == tab
+                        val isRecommended = (isRoot && tab == StartMethodTab.ROOT) ||
+                                (!isRoot && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && tab == StartMethodTab.WIRELESS)
+
+                        SegmentedButton(
+                            selected = isSelected,
+                            onClick = { selectedTab = tab },
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = tabs.size),
+                            icon = {
+                                Icon(
+                                    imageVector = when (tab) {
+                                        StartMethodTab.WIRELESS -> Icons.Outlined.Wifi
+                                        StartMethodTab.ROOT -> Icons.Outlined.PlayArrow
+                                        StartMethodTab.COMPUTER -> Icons.Outlined.Computer
+                                    },
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        ) {
+                            Text(
+                                text = when (tab) {
+                                    StartMethodTab.WIRELESS -> if (isRecommended) stringResource(R.string.home_tab_wireless_recommended) else stringResource(R.string.home_tab_wireless)
+                                    StartMethodTab.ROOT -> if (isRecommended) stringResource(R.string.home_tab_root_recommended) else stringResource(R.string.home_tab_root)
+                                    StartMethodTab.COMPUTER -> stringResource(R.string.home_tab_computer)
+                                },
+                                maxLines = 1
+                            )
+                        }
                     }
-                    StartMethodTab.ROOT -> {
-                        val rootRestart = running && resolvedStatus.uid == 0
-                        RootStartCard(
-                            isRestart = rootRestart,
-                            onStart = if (rootRestart) onRestartRoot else onStartRoot
-                        )
-                    }
-                    StartMethodTab.COMPUTER -> {
-                        ComputerAdbStartCard(
-                            onCopyCommand = {
-                                ClipboardUtils.put(context, Starter.adbCommand)
-                                Toast.makeText(context, context.getString(R.string.home_command_copied), Toast.LENGTH_SHORT).show()
-                            },
-                            onViewCommandDialog = { dialog = HomeDialog.AdbCommand },
-                            onGuide = { dialog = HomeDialog.AdbCommand }
-                        )
+                }
+            }
+
+            item {
+                AnimatedContent(
+                    targetState = selectedTab,
+                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                    label = "StartMethodCard"
+                ) { tab ->
+                    when (tab) {
+                        StartMethodTab.WIRELESS -> {
+                            WirelessAdbStartCard(
+                                onStart = onStartWirelessAdb,
+                                onPair = onPairWireless,
+                                onGuide = onOpenWirelessGuide
+                            )
+                        }
+                        StartMethodTab.ROOT -> {
+                            val rootRestart = running && resolvedStatus.uid == 0
+                            RootStartCard(
+                                isRestart = rootRestart,
+                                onStart = if (rootRestart) onRestartRoot else onStartRoot
+                            )
+                        }
+                        StartMethodTab.COMPUTER -> {
+                            ComputerAdbStartCard(
+                                onCopyCommand = {
+                                    ClipboardUtils.put(context, Starter.adbCommand)
+                                    Toast.makeText(context, context.getString(R.string.home_command_copied), Toast.LENGTH_SHORT).show()
+                                },
+                                onViewCommandDialog = { dialog = HomeDialog.AdbCommand },
+                                onGuide = { dialog = HomeDialog.AdbCommand }
+                            )
+                        }
                     }
                 }
             }
@@ -665,6 +706,8 @@ private fun WirelessAdbStartCard(
     onPair: () -> Unit,
     onGuide: () -> Unit
 ) {
+    val currentPort = remember { EnvironmentUtils.getAdbTcpPort() }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
@@ -692,12 +735,12 @@ private fun WirelessAdbStartCard(
                 )
                 Surface(
                     shape = MaterialTheme.shapes.small,
-                    color = MaterialTheme.colorScheme.secondaryContainer
+                    color = if (currentPort > 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
                 ) {
                     Text(
-                        text = "Android 11+",
+                        text = if (currentPort > 0) "Port: $currentPort" else "Android 11+",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        color = if (currentPort > 0) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                     )
                 }
@@ -713,11 +756,6 @@ private fun WirelessAdbStartCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedButton(onClick = onGuide) {
-                    Icon(Icons.Outlined.HelpOutline, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.home_wireless_adb_view_guide_button))
-                }
                 FilledTonalButton(onClick = onPair) {
                     Icon(Icons.Outlined.Wifi, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
@@ -727,6 +765,11 @@ private fun WirelessAdbStartCard(
                     Icon(Icons.Outlined.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(stringResource(R.string.home_wireless_step_start))
+                }
+                OutlinedButton(onClick = onGuide) {
+                    Icon(Icons.Outlined.HelpOutline, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(R.string.home_wireless_adb_view_guide_button))
                 }
             }
         }
