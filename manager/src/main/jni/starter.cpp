@@ -57,8 +57,13 @@ static void run_server(const char *dex_path, const char *main_class, const char 
         exit(EXIT_FATAL_SET_CLASSPATH);
     }
 
-    char lib_path[PATH_MAX]{0};
-    snprintf(lib_path, PATH_MAX, "%s/lib/%s", dirname(dex_path), ABI);
+    std::string dex_str(dex_path);
+    std::string dir_str = ".";
+    auto last_slash = dex_str.find_last_of('/');
+    if (last_slash != std::string::npos) {
+        dir_str = dex_str.substr(0, last_slash);
+    }
+    std::string lib_path = dir_str + "/lib/" + ABI;
 
     std::vector<std::string> args;
     args.reserve(16);
@@ -222,24 +227,14 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FATAL_BINDER_BLOCKED_BY_SELINUX);
     }
 
-    const char *untrusted_domains[] = {
-        "u:r:untrusted_app:s0",
-        "u:r:untrusted_app_25:s0",
-        "u:r:untrusted_app_27:s0",
-        "u:r:untrusted_app_29:s0",
-        "u:r:untrusted_app_30:s0",
-        "u:r:untrusted_app_32:s0",
-        "u:r:untrusted_app_33:s0",
-        "u:r:untrusted_app_34:s0",
-        "u:r:untrusted_app_35:s0",
-        "u:r:untrusted_app_36:s0",
-        "u:r:untrusted_app_37:s0",
-    };
-
-    for (const auto *domain : untrusted_domains) {
-        check_selinux(domain, "u:r:shell:s0", "binder", "call");
-        check_selinux(domain, "u:r:shell:s0", "binder", "transfer");
-    }
+    check_selinux("u:r:untrusted_app:s0", "u:r:shell:s0", "binder", "call");
+    check_selinux("u:r:untrusted_app:s0", "u:r:shell:s0", "binder", "transfer");
+    check_selinux("u:r:untrusted_app_25:s0", "u:r:shell:s0", "binder", "call");
+    check_selinux("u:r:untrusted_app_25:s0", "u:r:shell:s0", "binder", "transfer");
+    check_selinux("u:r:untrusted_app_27:s0", "u:r:shell:s0", "binder", "call");
+    check_selinux("u:r:untrusted_app_27:s0", "u:r:shell:s0", "binder", "transfer");
+    check_selinux("u:r:untrusted_app_29:s0", "u:r:shell:s0", "binder", "call");
+    check_selinux("u:r:untrusted_app_29:s0", "u:r:shell:s0", "binder", "transfer");
 
     printf("info: starter begin\n");
     fflush(stdout);
