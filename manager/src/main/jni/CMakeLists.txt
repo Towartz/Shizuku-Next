@@ -4,16 +4,47 @@ project("shizuku")
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_link_options(-Wl,-z,max-page-size=16384)
-add_compile_options(-Werror=format -fdata-sections -ffunction-sections -fno-exceptions -fno-rtti -fno-threadsafe-statics)
+# Global compilation flags for safety, stability, and code density
+add_compile_options(
+    -Werror=format
+    -fdata-sections
+    -ffunction-sections
+    -fno-exceptions
+    -fno-rtti
+    -fno-threadsafe-statics
+    -fstack-protector-strong
+    -D_FORTIFY_SOURCE=2
+)
+
+# Global link options for page alignment and memory hardening
+add_link_options(
+    -Wl,-z,max-page-size=16384
+    -Wl,-z,relro
+    -Wl,-z,now
+    -Wl,-z,noexecstack
+)
 
 if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message("Builing Release...")
+    message("Building Release with high-performance optimizations...")
 
-    add_compile_options(-Os -flto -fvisibility=hidden -fvisibility-inlines-hidden)
-    add_link_options(-flto -Wl,--exclude-libs,ALL -Wl,--gc-sections -Wl,--strip-all)
+    add_definitions(-DNDEBUG)
+    add_compile_options(
+        -O3
+        -flto
+        -fvisibility=hidden
+        -fvisibility-inlines-hidden
+        -fomit-frame-pointer
+        -fno-semantic-interposition
+    )
+    add_link_options(
+        -flto
+        -Wl,--exclude-libs,ALL
+        -Wl,--gc-sections
+        -Wl,--icf=all
+        -Wl,--strip-all
+    )
 else ()
-    message("Builing Debug...")
+    message("Building Debug...")
 
     add_definitions(-DDEBUG)
 endif ()
