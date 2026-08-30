@@ -262,9 +262,9 @@ int main(int argc, char *argv[]) {
     });
 
     if (killed_count == 0) {
-        printf("info: no existing server process found\n");
+        printf("info: no lingering processes found (clean state)\n");
     } else {
-        printf("info: cleanly killed %d existing process(es)\n", killed_count);
+        printf("info: cleanly terminated %d lingering process(es)\n", killed_count);
     }
     fflush(stdout);
 

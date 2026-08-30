@@ -182,6 +182,8 @@ private class ViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             if (Shizuku.pingBinder()) {
+                sb.append("Stopping active Shizuku service gracefully...").append('\n')
+                postResult()
                 try {
                     Shizuku.exit()
                     kotlinx.coroutines.delay(200)
@@ -223,6 +225,8 @@ private class ViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             if (Shizuku.pingBinder()) {
+                sb.append("Stopping active Shizuku service gracefully...").append('\n')
+                postResult()
                 try {
                     Shizuku.exit()
                     kotlinx.coroutines.delay(200)
